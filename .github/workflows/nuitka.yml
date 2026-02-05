@@ -1,0 +1,85 @@
+name: Build Cassette macOS (Nuitka)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-macos:
+    name: Build for ${{ matrix.artifact_name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-13 # Intel
+            artifact_name: macos-intel
+          - os: macos-latest # Apple Silicon (M1/M2/M3)
+            artifact_name: macos-silicon
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: Install Build Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install wheel setuptools numpy nuitka ordered-set zstandard
+
+      - name: Build and Install aubio
+        run: |
+          git clone https://github.com/aubio/aubio.git
+          cd aubio
+          python setup.py bdist_wheel
+          pip install dist/*.whl
+          cd ..
+
+      - name: Install Project Dependencies
+        run: |
+          # Установка всех необходимых модулей для корректного анализа Nuitka
+          pip install pygame PyQt5 loguru requests soundfile sounddevice PyOpenGL mutagen av
+
+      - name: Build macOS App with Nuitka
+        uses: Nuitka/Nuitka-Action@main
+        with:
+          nuitka-version: main
+          script-name: Cassette.py
+          # 'app' создает структуру .app bundle, 'onefile' упаковывает всё внутрь
+          mode: app
+          onefile: true
+          
+          # Плагины для корректной работы PyQt5 и Numpy
+          enable-plugins: |
+            pyqt5
+            numpy
+            
+          # Включение ваших ресурсов и данных
+          include-data-dir: |
+            System=System
+          include-data-files: |
+            version=.
+          
+          # Настройки macOS бандла
+          macos-create-app-bundle: true
+          macos-app-icon: System/Icons/Icon256.icns
+          macos-signed-app-name: com.chips.cassette
+          
+          # Принудительно включаем модули, которые часто теряются при импортах
+          include-package: |
+            av
+            OpenGL
+          
+          # Убираем консоль (для GUI приложения)
+          disable-console: true
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Cassette-${{ matrix.artifact_name }}
+          path: build/*.app
+          include-hidden-files: true
