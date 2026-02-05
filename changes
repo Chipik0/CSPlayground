@@ -1,0 +1,26 @@
+
+
+## Todo
+- Fully remove pygame.
+- Optimize everything using Singleton mechanics.
+
+**Cassette v0.6.1**
+
+- Fixed .flac cropping crash.
+- Fixed Floating Window antialiasing.
+
+- Added D keybind to fastly edit the duration
+- Added B keybind to fastly edit the brightness
+
+- Keybinds now work even with different language keyboards.
+
+
+
+
+
+
+
+- add more easter eggs
+- optimize compositor
+- fix long startup on macos
+- fix --collect-all PyOpenGL

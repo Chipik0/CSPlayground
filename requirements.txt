@@ -1,0 +1,11 @@
+numpy
+pygame
+PyQt5
+loguru
+aubio
+requests
+soundfile
+sounddevice
+PyOpenGL
+mutagen
+av

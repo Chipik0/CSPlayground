@@ -1,0 +1,55 @@
+import ctypes
+from ctypes import wintypes
+
+WM_NCHITTEST = 0x0084
+HTTRANSPARENT = -1
+HTCLIENT = 1
+
+    def nativeEvent(self, eventType, message):
+        if eventType == "windows_generic_MSG":
+            msg = wintypes.MSG.from_address(message.__int__())
+            
+            if msg.message == WM_NCHITTEST:
+                x = ctypes.c_short(msg.lParam & 0xFFFF).value
+                y = ctypes.c_short((msg.lParam >> 16) & 0xFFFF).value
+                global_pos = QPoint(x, y)
+                
+                local_pos = self.mapFromGlobal(global_pos)
+                interactive_rect = self.content_widget.geometry()
+                
+                if not interactive_rect.contains(local_pos):
+                    return True, HTTRANSPARENT
+        
+        return super().nativeEvent(eventType, message)
+
+
+if sys.platform == "win32":
+    # It prevents appearing of CMD because of pydub ffmpeg operations.
+    
+    class NoWindowPopen(subprocess.Popen):
+        def __init__(self, *args, **kwargs):
+            startupinfo = subprocess.STARTUPINFO()
+            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+            startupinfo.wShowWindow = subprocess.SW_HIDE
+            kwargs["startupinfo"] = startupinfo
+            
+            super().__init__(*args, **kwargs)
+
+    subprocess.Popen = NoWindowPopen
+
+def is_ffmpeg_installed():
+    envdir_list = [os.curdir] + os.environ["PATH"].split(os.pathsep)
+    ffmpeg_found = False
+
+    for envdir in envdir_list:
+        if "ffmpeg" in envdir.lower():
+            ffmpeg_found = True
+            break
+    
+    return ffmpeg_found
+
+if not is_ffmpeg_installed():
+            UI.ErrorWindow(
+                "FFmpeg?",
+                "FFmpeg was not found. Audio can't be loaded, but the main menu will still work.\n\nTo install FFmpeg on Linux, use your package manager, for example:\n-- Ubuntu/Debian: sudo apt install ffmpeg\n-- Arch: sudo pacman -S ffmpeg\n-- Fedora: sudo dnf install ffmpeg\n\nTo install FFmpeg on Windows, use PowerShell:\n-- winget install ffmpeg\n\nRestart the app after installation."
+            ).exec_()
