@@ -49,33 +49,35 @@ jobs:
         with:
           nuitka-version: main
           script-name: Cassette.py
-          # 'app' создает структуру .app bundle, 'onefile' упаковывает всё внутрь
-          mode: app
-          onefile: true
+          # Используем 'onefile' как основной режим
+          mode: onefile
           
-          # Плагины для корректной работы PyQt5 и Numpy
+          # Плагины
           enable-plugins: |
             pyqt5
             numpy
             
-          # Включение ваших ресурсов и данных
+          # Данные и зависимости
           include-data-dir: |
             System=System
           include-data-files: |
             version=.
-          
-          # Настройки macOS бандла
-          macos-create-app-bundle: true
-          macos-app-icon: System/Icons/Icon256.icns
-          macos-signed-app-name: com.chips.cassette
-          
-          # Принудительно включаем модули, которые часто теряются при импортах
           include-package: |
             av
             OpenGL
           
-          # Убираем консоль (для GUI приложения)
+          # Настройки macOS (согласно списку валидных входов)
+          macos-app-mode: bundle
+          macos-app-icon: System/Icons/Icon256.icns
+          macos-signed-app-name: com.chips.cassette
+          
+          # Отключение консоли
           disable-console: true
+          
+          # Если экшен все равно капризничает, можно добавить прямые аргументы:
+          # (Но сначала попробуйте без этого блока)
+          # module-parameter: |
+          #   --macos-create-app-bundle
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
