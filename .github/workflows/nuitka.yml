@@ -44,8 +44,9 @@ jobs:
           # Установка всех необходимых модулей для корректного анализа Nuitka
           pip install pygame PyQt5 loguru requests soundfile sounddevice PyOpenGL mutagen av
 
-      - name: Fix APK Permissions
-        run: chmod -R +w System/
+      - name: Remove a file
+        run: rm path/to/your/file.txt
+
 
       - name: Build macOS App with Nuitka
         uses: Nuitka/Nuitka-Action@main
