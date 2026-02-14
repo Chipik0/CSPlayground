@@ -71,8 +71,6 @@ jobs:
           --include-package=OpenGL \
           --disable-console \
           --output-dir=output \
-          --accept-downloads \
-          --macos-sign-not-identity \
           Cassette.py
 
       - name: Create DMG (Optional but recommended)
