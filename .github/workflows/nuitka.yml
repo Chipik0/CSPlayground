@@ -70,7 +70,6 @@ jobs:
             --include-package=av \
             --include-package=OpenGL \
             --disable-console \
-            --macos-disable-signature \
             --output-dir=output \
             Cassette.py
 
