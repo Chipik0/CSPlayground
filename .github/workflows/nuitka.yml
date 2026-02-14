@@ -55,7 +55,9 @@ jobs:
           
           chmod 755 System/ADB/adb-macos
           ls -la System/ADB/
-
+      - name: Fix permissions
+        run: |
+          chmod -R u+rwX,go+rX,go-w build || true
       - name: Build macOS App with Nuitka
         uses: Nuitka/Nuitka-Action@main
         with:
@@ -89,8 +91,9 @@ jobs:
           
           # Если экшен все равно капризничает, можно добавить прямые аргументы:
           # (Но сначала попробуйте без этого блока)
-          # module-parameter: |
-          #   --macos-create-app-bundle
+          module-parameter: |
+            --macos-create-app-bundle
+            --macos-disable-signature
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
