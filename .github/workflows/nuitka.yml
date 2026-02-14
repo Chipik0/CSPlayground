@@ -52,6 +52,8 @@ jobs:
           rm System/ADB/AdbWinApi.dll
           rm System/ADB/AdbWinUsbApi.dll
 
+          chmod +x System/ADB/adb-macos
+
 
 
       - name: Build macOS App with Nuitka
