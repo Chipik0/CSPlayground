@@ -56,9 +56,7 @@ jobs:
           find . -type d -exec chmod 755 {} +
           find . -type f -exec chmod 644 {} +
           chmod +x System/ADB/adb-macos
-      - name: Fix permissions
-        run: |
-          chmod -R u+rwX,go+rX,go-w build || true
+
       - name: Build macOS App with Nuitka
         uses: Nuitka/Nuitka-Action@main
         with:
