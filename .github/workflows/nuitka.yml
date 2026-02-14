@@ -71,7 +71,6 @@ jobs:
           enable-plugins: |
             pyqt5
             numpy
-            pyav
             
           # Данные и зависимости
           include-raw-dir: |
