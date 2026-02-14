@@ -45,7 +45,13 @@ jobs:
           pip install pygame PyQt5 loguru requests soundfile sounddevice PyOpenGL mutagen av
 
       - name: Remove a file
-        run: rm System/ADB/CassetteReceiver.apk
+        run: |
+          rm System/ADB/CassetteReceiver.apk
+          rm System/ADB/adb-linux
+          rm System/ADB/adb.exe
+          rm System/ADB/AdbWinApi.dll
+          rm System/ADB/AdbWinUsbApi.dll
+
 
 
       - name: Build macOS App with Nuitka
