@@ -44,17 +44,18 @@ jobs:
           # Установка всех необходимых модулей для корректного анализа Nuitka
           pip install pygame PyQt5 loguru requests soundfile sounddevice PyOpenGL mutagen av
 
-      - name: Remove a file and fix permissions
+      - name: Prepare Assets
         run: |
+          # Удаляем лишние бинарники для других ОС
           rm -f System/ADB/CassetteReceiver.apk System/ADB/adb-linux System/ADB/adb.exe System/ADB/AdbWinApi.dll System/ADB/AdbWinUsbApi.dll
           
-          # Очищаем атрибуты и правим права
-          sudo chown -R $USER .
-          chmod -R 777 .
-          xattr -cr . 
+          # Рекурсивно удаляем все расширенные атрибуты (важно для macOS)
+          xattr -rc . 
           
-          chmod 755 System/ADB/adb-macos
-          ls -la System/ADB/
+          # Устанавливаем права: 644 для обычных файлов, 755 для папок и adb
+          find . -type d -exec chmod 755 {} +
+          find . -type f -exec chmod 644 {} +
+          chmod +x System/ADB/adb-macos
       - name: Fix permissions
         run: |
           chmod -R u+rwX,go+rX,go-w build || true
@@ -89,15 +90,13 @@ jobs:
           disable-console: true
           show-progress: true
           
-          # Если экшен все равно капризничает, можно добавить прямые аргументы:
-          # (Но сначала попробуйте без этого блока)
-          module-parameter: |
-            --macos-create-app-bundle
+          arguments: |
             --macos-disable-signature
+            --macos-create-app-bundle
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: Cassette-${{ matrix.artifact_name }}
-          path: build/*.app
+          path: output/*.app
           include-hidden-files: true
