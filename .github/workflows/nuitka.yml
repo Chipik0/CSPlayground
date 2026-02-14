@@ -44,19 +44,16 @@ jobs:
           # Установка всех необходимых модулей для корректного анализа Nuitka
           pip install pygame PyQt5 loguru requests soundfile sounddevice PyOpenGL mutagen av
 
-      - name: Remove a file
+      - name: Remove a file and fix permissions
         run: |
-          rm System/ADB/CassetteReceiver.apk
-          rm System/ADB/adb-linux
-          rm System/ADB/adb.exe
-          rm System/ADB/AdbWinApi.dll
-          rm System/ADB/AdbWinUsbApi.dll
-
-          sudo xattr -rd com.apple.quarantine System/ADB/adb-macos || true
+          rm -f System/ADB/CassetteReceiver.apk System/ADB/adb-linux System/ADB/adb.exe System/ADB/AdbWinApi.dll System/ADB/AdbWinUsbApi.dll
+          
+          # Очищаем атрибуты и правим права
+          sudo chown -R $USER .
+          chmod -R 777 .
+          xattr -cr . 
           
           chmod 755 System/ADB/adb-macos
-          
-          # 3. (Опционально) Проверяем, что файл на месте и права применились
           ls -la System/ADB/
 
       - name: Build macOS App with Nuitka
@@ -66,6 +63,7 @@ jobs:
           script-name: Cassette.py
           # Используем 'onefile' как основной режим
           mode: app
+          output-dir: output
           
           # Плагины
           enable-plugins: |
