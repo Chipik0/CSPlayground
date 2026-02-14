@@ -122,8 +122,6 @@ jobs:
             --include-data-files=version=Resources/ \
             --include-package=av \
             --include-package=OpenGL \
-            --include-path="${OPENSSL_INCLUDE_DIR}" \
-            --include-library-path="${OPENSSL_LIB_DIR}" \
             --disable-console \
             --output-dir=output \
             Cassette.py
