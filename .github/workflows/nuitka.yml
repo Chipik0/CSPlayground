@@ -71,7 +71,6 @@ jobs:
             --include-package=OpenGL \
             --disable-console \
             --output-dir=output \
-            --accept-downloads \
             Cassette.py
 
       - name: Create DMG (Optional but recommended)
