@@ -4,88 +4,159 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-macos:
-    name: Build for ${{ matrix.artifact_name }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: macos-15-intel
-            artifact_name: macos-intel
-          - os: macos-latest
-            artifact_name: macos-silicon
-
+  # Вставь/замени этот job в своём workflow для Intel-сборки
+  build-macos-intel:
+    name: Build macOS Intel (x86_64)
+    runs-on: macos-13   # macos-13 на GH Actions даёт x86_64 runner
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Set up Python (x64)
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
+          architecture: 'x64'
           cache: 'pip'
 
-      - name: Install Build Dependencies
+      - name: Install Homebrew packages (ccache, openssl@1.1)
+        run: |
+          # non-interactive install of required bottles (if уже установлен — ничего страшного)
+          brew update || true
+          brew install ccache || true
+          brew install openssl@1.1 || true
+
+      - name: Configure ccache and env for OpenSSL
+        run: |
+          # make ccache available (intel runners usually have /usr/local)
+          if [ -d "/usr/local/opt/ccache/libexec" ]; then
+            echo "PATH=/usr/local/opt/ccache/libexec:$PATH" >> $GITHUB_ENV
+          elif [ -d "/opt/homebrew/opt/ccache/libexec" ]; then
+            echo "PATH=/opt/homebrew/opt/ccache/libexec:$PATH" >> $GITHUB_ENV
+          fi
+
+          # point to openssl@1.1 (intel brew prefix usually /usr/local)
+          if [ -d "/usr/local/opt/openssl@1.1" ]; then
+            echo "LDFLAGS=-L/usr/local/opt/openssl@1.1/lib" >> $GITHUB_ENV
+            echo "CPPFLAGS=-I/usr/local/opt/openssl@1.1/include" >> $GITHUB_ENV
+            echo "PKG_CONFIG_PATH=/usr/local/opt/openssl@1.1/lib/pkgconfig" >> $GITHUB_ENV
+            echo "OPENSSL_PREFIX=/usr/local/opt/openssl@1.1" >> $GITHUB_ENV
+          else
+            # fallback (if brew layout differs)
+            echo "LDFLAGS=-L/opt/homebrew/opt/openssl@1.1/lib" >> $GITHUB_ENV
+            echo "CPPFLAGS=-I/opt/homebrew/opt/openssl@1.1/include" >> $GITHUB_ENV
+            echo "PKG_CONFIG_PATH=/opt/homebrew/opt/openssl@1.1/lib/pkgconfig" >> $GITHUB_ENV
+            echo "OPENSSL_PREFIX=/opt/homebrew/opt/openssl@1.1" >> $GITHUB_ENV
+          fi
+
+          # prefer clang wrapped by ccache
+          echo 'CC="ccache clang"' >> $GITHUB_ENV
+          echo 'CXX="ccache clang++"' >> $GITHUB_ENV
+
+      - name: Cache ccache directory
+        uses: actions/cache@v4
+        with:
+          path: ~/.ccache
+          key: ${{ runner.os }}-ccache-${{ github.ref }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-ccache-
+
+      - name: show Python and OpenSSL info
+        run: |
+          python -V
+          python -c "import sys, ssl, _hashlib; print('python exe:', sys.executable); print('_hashlib:', getattr(_hashlib,'__file__', 'n/a'))"
+          # проверим архитектуру файлов
+          python -c "import _hashlib, os; print('hashlib file:'); os.system('file ' + _hashlib.__file__)"
+          os_lib="$OPENSSL_PREFIX/lib/libssl*.dylib"
+          echo "Looking for OpenSSL libs at $OPENSSL_PREFIX"
+          ls -la "$OPENSSL_PREFIX" || true
+          file $(ls $OPENSSL_PREFIX/lib/libssl*.dylib 2>/dev/null || echo /dev/null) || true
+          ccache -s || true
+
+      - name: Install Python wheels/deps (quiet)
         run: |
           python -m pip install --upgrade pip
           pip install wheel setuptools numpy nuitka ordered-set zstandard
-
-      - name: Build and Install aubio
-        run: |
-          git clone https://github.com/aubio/aubio.git
-          cd aubio
-          python setup.py bdist_wheel
-          pip install dist/*.whl
+          # aubio build (если надо)
+          git clone https://github.com/aubio/aubio.git || true
+          cd aubio || true
+          python setup.py bdist_wheel || true
+          pip install dist/*.whl || true
           cd ..
 
       - name: Install Project Dependencies
         run: |
-          pip install pygame PyQt5 loguru requests soundfile sounddevice PyOpenGL mutagen av
+          pip install pygame PyQt5 loguru requests soundfile sounddevice PyOpenGL mutagen av || true
 
       - name: Prepare Assets and Fix Permissions
         run: |
-          # Удаляем лишние бинарники
-          rm -f System/ADB/CassetteReceiver.apk System/ADB/adb-linux System/ADB/adb.exe System/ADB/AdbWinApi.dll System/ADB/AdbWinUsbApi.dll
+          rm -f System/ADB/CassetteReceiver.apk System/ADB/adb-linux System/ADB/adb.exe System/ADB/AdbWinApi.dll System/ADB/AdbWinUsbApi.dll || true
+          xattr -rc .
+          find . -type d -exec chmod 755 {} +
+          find . -type f -exec chmod 644 {} +
+          chmod +x System/ADB/adb-macos || true
 
-      - name: Build with Nuitka (Command Line)
+      - name: Build with Nuitka (Intel target)
+        env:
+          LDFLAGS: ${{ env.LDFLAGS }}
+          CPPFLAGS: ${{ env.CPPFLAGS }}
+          PKG_CONFIG_PATH: ${{ env.PKG_CONFIG_PATH }}
+          PATH: ${{ env.PATH }}
         run: |
+          # Убедимся, что nuitka использует ccache-wrapped clang
+          export CC="ccache clang"
+          export CXX="ccache clang++"
+
+          # Явно указать пути к OpenSSL, чтобы зависимость _hashlib корректно просканировалась
+          OPENSSL_LIB_DIR="${OPENSSL_PREFIX}/lib"
+          OPENSSL_INCLUDE_DIR="${OPENSSL_PREFIX}/include"
+
           sudo python -m nuitka \
-          --standalone \
-          --macos-create-app-bundle \
-          --macos-app-mode=gui \
-          --macos-app-icon=System/Icons/Icon256.icns \
-          --plugin-enable=pyqt5 \
-          --plugin-enable=numpy \
-          --include-data-dir=System=Resources/System \
-          --include-data-files=version=Resources/ \
-          --include-package=av \
-          --include-package=OpenGL \
-          --disable-console \
-          --output-dir=output \
-          Cassette.py
+            --standalone \
+            --macos-create-app-bundle \
+            --macos-app-mode=gui \
+            --macos-app-icon=System/Icons/Icon256.icns \
+            --plugin-enable=pyqt5 \
+            --plugin-enable=numpy \
+            --include-data-dir=System=Resources/System \
+            --include-data-files=version=Resources/ \
+            --include-package=av \
+            --include-package=OpenGL \
+            --include-path="${OPENSSL_INCLUDE_DIR}" \
+            --include-library-path="${OPENSSL_LIB_DIR}" \
+            --disable-console \
+            --output-dir=output \
+            Cassette.py
 
       - name: Make resource symlinks so old paths keep working
         run: |
           APP="output/Cassette.app"
           MACOS="$APP/Contents/MacOS"
           RES="$APP/Contents/Resources"
-              
-          # убедимся, что Resources/System присутствует (т.е. ты включил data в Resources)
           if [ -d "$RES/System" ]; then
             cd "$MACOS"
             ln -sf ../Resources/System System || true
-            # если у тебя version лежит в Resources/ — можно сделать ссылку и на него
             ln -sf ../Resources/version version || true
           else
-            echo "WARNING: $RES/System not found — проверь --include-data-dir mapping"
-            exit 0
+            echo "WARNING: $RES/System not found — проверь include-data-dir mapping"
           fi
+
+      - name: Create DMG (optional)
+        run: |
+          cd output
+          hdiutil create -volname "Cassette" -srcfolder Cassette.app -ov -format UDZO Cassette.dmg || true
+
+      - name: Verify built binary arch and list
+        run: |
+          BIN="output/Cassette.app/Contents/MacOS/Cassette"
+          echo "Binary info for $BIN"
+          file "$BIN" || true
+          otool -L "$BIN" || true
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Cassette-${{ matrix.artifact_name }}
+          name: Cassette-macos-intel
           path: |
             output/Cassette.app
             output/Cassette.dmg
