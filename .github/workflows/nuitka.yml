@@ -54,6 +54,15 @@ jobs:
 
           chmod +x System/ADB/adb-macos
 
+# 1. Убираем флаг "quarantine" и другие атрибуты macOS, которые могли прилипнуть к файлу
+          sudo xattr -rd com.apple.quarantine System/ADB/adb-macos || true
+          
+          # 2. Даем полные права на чтение/запись/выполнение для владельца
+          chmod 755 System/ADB/adb-macos
+          
+          # 3. (Опционально) Проверяем, что файл на месте и права применились
+          ls -la System/ADB/
+
 
 
       - name: Build macOS App with Nuitka
