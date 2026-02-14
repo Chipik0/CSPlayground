@@ -84,7 +84,6 @@ jobs:
           # Настройки macOS (согласно списку валидных входов)
           macos-app-mode: gui
           macos-app-icon: System/Icons/Icon256.icns
-          macos-signed-app-name: com.chips.cassette
           
           # Отключение консоли
           disable-console: true
