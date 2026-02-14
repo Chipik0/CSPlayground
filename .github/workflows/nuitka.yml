@@ -1,4 +1,4 @@
-name: Build Cassette macOS (Nuitka)
+name: Build Cassette macOS (Manual)
 
 on:
   workflow_dispatch:
@@ -11,9 +11,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: macos-15 # Intel
+          - os: macos-15
             artifact_name: macos-intel
-          - os: macos-latest # Apple Silicon (M1/M2/M3)
+          - os: macos-latest
             artifact_name: macos-silicon
 
     steps:
@@ -41,60 +41,50 @@ jobs:
 
       - name: Install Project Dependencies
         run: |
-          # Установка всех необходимых модулей для корректного анализа Nuitka
           pip install pygame PyQt5 loguru requests soundfile sounddevice PyOpenGL mutagen av
 
-      - name: Prepare Assets
+      - name: Prepare Assets and Fix Permissions
         run: |
-          # Удаляем лишние бинарники для других ОС
+          # Удаляем лишние бинарники
           rm -f System/ADB/CassetteReceiver.apk System/ADB/adb-linux System/ADB/adb.exe System/ADB/AdbWinApi.dll System/ADB/AdbWinUsbApi.dll
           
-          # Рекурсивно удаляем все расширенные атрибуты (важно для macOS)
-          xattr -rc . 
+          # Очистка атрибутов карантина macOS
+          xattr -rc .
           
-          # Устанавливаем права: 644 для обычных файлов, 755 для папок и adb
+          # Установка прав: папки 755, файлы 644, adb исполняемый
           find . -type d -exec chmod 755 {} +
           find . -type f -exec chmod 644 {} +
           chmod +x System/ADB/adb-macos
 
-      - name: Build macOS App with Nuitka
-        uses: Nuitka/Nuitka-Action@main
-        with:
-          nuitka-version: main
-          script-name: Cassette.py
-          # Используем 'onefile' как основной режим
-          mode: app
-          output-dir: output
-          
-          # Плагины
-          enable-plugins: |
-            pyqt5
-            numpy
-            
-          # Данные и зависимости
-          include-data-dir: |
-            System=System
-          include-data-files: |
-            version=.
-          include-package: |
-            av
-            OpenGL
-          
-          # Настройки macOS (согласно списку валидных входов)
-          macos-app-mode: gui
-          macos-app-icon: System/Icons/Icon256.icns
-          
-          # Отключение консоли
-          disable-console: true
-          show-progress: true
-          
-          arguments: |
-            --macos-disable-signature
-            --macos-create-app-bundle
+      - name: Build with Nuitka (Command Line)
+        run: |
+          python -m nuitka \
+            --standalone \
+            --macos-create-app-bundle \
+            --macos-app-mode=gui \
+            --macos-app-icon=System/Icons/Icon256.icns \
+            --plugin-enable=pyqt5 \
+            --plugin-enable=numpy \
+            --include-data-dir=System=System \
+            --include-data-files=version=. \
+            --include-package=av \
+            --include-package=OpenGL \
+            --disable-console \
+            --macos-disable-signature \
+            --output-dir=output \
+            Cassette.py
+
+      - name: Create DMG (Optional but recommended)
+        run: |
+          # Это предотвратит потерю прав доступа при скачивании
+          cd output
+          hdiutil create -volname "Cassette" -srcfolder Cassette.app -ov -format UDZO Cassette.dmg
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: Cassette-${{ matrix.artifact_name }}
-          path: output/*.app
+          path: |
+            output/Cassette.app
+            output/Cassette.dmg
           include-hidden-files: true
