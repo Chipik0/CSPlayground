@@ -74,7 +74,7 @@ jobs:
             pyav
             
           # Данные и зависимости
-          --include-raw-dir: |
+          include-raw-dir: |
             System=System
           include-data-files: |
             version=.
