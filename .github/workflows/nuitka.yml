@@ -47,14 +47,6 @@ jobs:
         run: |
           # Удаляем лишние бинарники
           rm -f System/ADB/CassetteReceiver.apk System/ADB/adb-linux System/ADB/adb.exe System/ADB/AdbWinApi.dll System/ADB/AdbWinUsbApi.dll
-          
-          # Очистка атрибутов карантина macOS
-          xattr -rc .
-          
-          # Установка прав: папки 755, файлы 644, adb исполняемый
-          find . -type d -exec chmod 755 {} +
-          find . -type f -exec chmod 644 {} +
-          chmod +x System/ADB/adb-macos
 
       - name: Build with Nuitka (Command Line)
         run: |
@@ -73,11 +65,22 @@ jobs:
           --output-dir=output \
           Cassette.py
 
-      - name: Create DMG (Optional but recommended)
+      - name: Make resource symlinks so old paths keep working
         run: |
-          # Это предотвратит потерю прав доступа при скачивании
-          cd output
-          hdiutil create -volname "Cassette" -srcfolder Cassette.app -ov -format UDZO Cassette.dmg
+          APP="output/Cassette.app"
+          MACOS="$APP/Contents/MacOS"
+          RES="$APP/Contents/Resources"
+              
+          # убедимся, что Resources/System присутствует (т.е. ты включил data в Resources)
+          if [ -d "$RES/System" ]; then
+            cd "$MACOS"
+            ln -sf ../Resources/System System || true
+            # если у тебя version лежит в Resources/ — можно сделать ссылку и на него
+            ln -sf ../Resources/version version || true
+          else
+            echo "WARNING: $RES/System not found — проверь --include-data-dir mapping"
+            exit 0
+          fi
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
