@@ -59,19 +59,21 @@ jobs:
       - name: Build with Nuitka (Command Line)
         run: |
           sudo python -m nuitka \
-            --standalone \
-            --macos-create-app-bundle \
-            --macos-app-mode=gui \
-            --macos-app-icon=System/Icons/Icon256.icns \
-            --plugin-enable=pyqt5 \
-            --plugin-enable=numpy \
-            --include-data-dir=System=System \
-            --include-data-files=version=. \
-            --include-package=av \
-            --include-package=OpenGL \
-            --disable-console \
-            --output-dir=output \
-            Cassette.py
+          --standalone \
+          --macos-create-app-bundle \
+          --macos-app-mode=gui \
+          --macos-app-icon=System/Icons/Icon256.icns \
+          --plugin-enable=pyqt5 \
+          --plugin-enable=numpy \
+          --include-data-dir=System=Resources/System \
+          --include-data-files=version=Resources/ \
+          --include-package=av \
+          --include-package=OpenGL \
+          --disable-console \
+          --output-dir=output \
+          --accept-downloads \
+          --macos-sign-not-identity \
+          Cassette.py
 
       - name: Create DMG (Optional but recommended)
         run: |
