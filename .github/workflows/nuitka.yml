@@ -58,7 +58,7 @@ jobs:
 
       - name: Build with Nuitka (Command Line)
         run: |
-          python -m nuitka \
+          sudo python -m nuitka \
             --standalone \
             --macos-create-app-bundle \
             --macos-app-mode=gui \
