@@ -73,7 +73,7 @@ jobs:
             numpy
             
           # Данные и зависимости
-          include-raw-dir: |
+          include-data-dir: |
             System=System
           include-data-files: |
             version=.
