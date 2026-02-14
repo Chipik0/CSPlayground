@@ -139,10 +139,6 @@ jobs:
             echo "WARNING: $RES/System not found — проверь include-data-dir mapping"
           fi
 
-      - name: Create DMG (optional)
-        run: |
-          cd output
-          hdiutil create -volname "Cassette" -srcfolder Cassette.app -ov -format UDZO Cassette.dmg || true
 
       - name: Verify built binary arch and list
         run: |
