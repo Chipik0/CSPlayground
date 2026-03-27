@@ -1,26 +1,54 @@
-
-
 ## Todo
-- Fully remove pygame.
 - Optimize everything using Singleton mechanics.
+- Finalize compositor optimization.
+- Remake the turorial
+- New context menu
+- Import
+- Оптимизировать Glyph Receiver, добавить в Glyph Receiver поддержку keyframes
 
-**Cassette v0.6.1**
+# Optimization and Code Look
+Actions.py      100% | Done
+Controllers.py  100% | Done
+Timeline.py     100% | Done
+Widget.py       100% | Done
+Audio.py        100% | Done
+Encoder.py      100% | Done
+Inputs.py       100% | Done
+GlyphEffects.py 100% | Done
+LoomEngine.py   100% | Done
+Constants.py    100%
+Menu.py         90%
+ProjectSaver.py 90%
+Basic.py        50%
+Player.py       E
+RTVisualizer.py E
+Widgets.py      E
+Windows.py      E
+Porter.py       B
+Styles.py       A
+Utils.py        A
 
-- Fixed .flac cropping crash.
-- Fixed Floating Window antialiasing.
+## Cassette v0.9.0
 
-- Added D keybind to fastly edit the duration
-- Added B keybind to fastly edit the brightness
+**Cool Stuff**
+- Улучшенная механика отображения Глифов. Значительно уменьшена вероятность рассинхронизации отображения.
+- Улучшения в работе Undo Redo механики.
+- Теперь, максимальная длина истории действий - 1000.
+- Исправлен лаг при копировании большого количества Глифов
 
-- Keybinds now work even with different language keyboards.
+**New Shit**
+- Новый способ удобно управлять яркостью Глифов - Keyframes. Смотрите `Effect Menu` -> `Fade`.
+- Новые эффекты.
 
-
-
-
-
-
-
-- add more easter eggs
-- optimize compositor
-- fix long startup on macos
-- fix --collect-all PyOpenGL
+**For Nerds**
+- Уменьшено количество костылей.
+- Убраны Wildcard импорты.
+- Применен алгоритм Single Source of Truth для борьбы с возможными багами.
+- Улучшенная архитектура кода.
+- Добавлены аннотации типов.
+- Код теперь сделан в однотипном стиле.
+- Функции переименованы чтобы легко понимать что они делают.
+- Убраны _ перед названиями некоторых переменных или функций, где это буквально бесполезно.
+- Уменьшены лаги при вставке Глифов.
+- Значительно улучшена общая производительность при редактировании.
+- Улучшена отрисовка вейвформы.

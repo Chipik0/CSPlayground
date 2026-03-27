@@ -1,10 +1,10 @@
 name: Build Cassette Cross-Platform
 
 on:
-  workflow_dispatch: 
+  workflow_dispatch:
     inputs:
       reason:
-        description: 'Manual Building'
+        description: 'Reason'
         required: false
         default: 'Manual Building'
 
@@ -19,19 +19,12 @@ jobs:
           - os: ubuntu-22.04
             artifact_name: linux-x64
             sep: ":"
-            icon_ext: "png"
           - os: windows-latest
-            artifact_name: win-x64
-            sep: ";"
-            icon_ext: "ico"
+            artifact_name: windows-x64
           - os: macos-15-intel
             artifact_name: macos-intel
-            sep: ":"
-            icon_ext: "icns"
           - os: macos-latest
             artifact_name: macos-silicon
-            sep: ":"
-            icon_ext: "icns"
 
     steps:
       - name: Checkout repository
@@ -70,11 +63,30 @@ jobs:
           else
             source venv/bin/activate
           fi
+
           pip install aubio/dist/*.whl
-          if [ -f requirements.txt ]; then
-            pip install -r requirements.txt
-          fi
+          pip install -r requirements.txt
           pip install pyinstaller
+
+      - name: Cleanup unnecessary files
+        shell: bash
+        run: |
+          if [ "${{ runner.os }}" == "Linux" ]; then
+            rm System/ADB/adb-macos
+            rm System/ADB/adb.exe
+            rm System/ADB/AdbWinApi.dll
+            rm System/ADB/AdbWinUsbApi.dll
+          elif [ "${{ runner.os }}" == "Windows" ]; then
+            rm System/ADB/adb-macos
+            rm System/ADB/adb-linux
+          elif [ "${{ runner.os }}" == "macOS" ]; then
+            rm System/ADB/adb-linux
+            rm System/ADB/adb.exe
+            rm System/ADB/AdbWinApi.dll
+            rm System/ADB/AdbWinUsbApi.dll
+          fi
+
+          rm System/ADB/CassetteReceiver.apk
 
       - name: Run PyInstaller
         shell: bash
@@ -85,29 +97,7 @@ jobs:
             source venv/bin/activate
           fi
 
-          ICON_PATH="System/Icons/Icon256.${{ matrix.icon_ext }}"
-          ICON_ARG=""
-          if [ -f "$ICON_PATH" ]; then
-            ICON_ARG="--icon=$ICON_PATH"
-          fi
-
-          # Select bundle mode
-          if [ "${{ runner.os }}" == "macOS" ]; then
-            BUNDLE_MODE="--onefile --windowed"
-          else
-            BUNDLE_MODE="--onedir --windowed"
-          fi
-
-          pyinstaller $BUNDLE_MODE \
-            $ICON_ARG \
-            --add-data "version${{ matrix.sep }}." \
-            --add-data "System${{ matrix.sep }}System" \
-            --hidden-import OpenGL \
-            --hidden-import="av.sidedata.sidedata" \
-            --hidden-import av \
-            --collect-all av \
-            --noconfirm \
-            Cassette.py
+          pyinstaller --noconfirm cassette.spec
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
@@ -115,4 +105,5 @@ jobs:
           name: cassette-${{ matrix.artifact_name }}
           path: |
             ${{ runner.os == 'macOS' && 'dist/' || 'dist/Cassette' }}
+            ${{ runner.os == 'macOS' && '!dist/Cassette' || '' }}
           include-hidden-files: true
