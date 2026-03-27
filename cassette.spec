@@ -24,9 +24,7 @@ a = Analysis(
     ],
     hiddenimports=[
         'OpenGL',
-        'OpenGL.platform.egl',
-        'av.sidedata.sidedata',
-        'av'
+        'OpenGL.platform.egl'
     ],
     hookspath=[],
     hooksconfig={},

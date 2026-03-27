@@ -1114,6 +1114,15 @@ player = PlaybackManager()
 ui_player = UISoundManager()
 
 prefix = "System/Assets/Sounds"
+import sys, os
+def get_resource_path(relative_path):
+    if getattr(sys, 'frozen', False):
+        base_path = getattr(sys, '_MEIPASS', os.path.dirname(sys.executable))
+    
+    else:
+        base_path = os.path.abspath(".")
+    
+    return os.path.join(base_path, relative_path)
 
 sounds = [
     (f"{prefix}/App/Startup.wav", "App/Startup"),
@@ -1122,5 +1131,6 @@ sounds = [
     (f"{prefix}/Rewind2.wav", "Rewind")
 ]
 
-for sound in sounds:
-    ui_player.preload(sound[0], sound[1])
+for sound_path, sound_id in sounds:
+    absolute_path = get_resource_path(sound_path)
+    ui_player.preload(absolute_path, sound_id)
