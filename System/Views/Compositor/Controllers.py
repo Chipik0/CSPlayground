@@ -1,12 +1,8 @@
-from __future__ import (
-    annotations
-)
+from __future__ import annotations
 
 import copy
 
-from functools import (
-    partial
-)
+from functools import partial
 
 from PyQt5.QtGui import (
     QCursor,
@@ -29,7 +25,6 @@ from PyQt5.QtWidgets import (
 )
 
 from System.Common import (
-    Utils,
     Styles,
     Constants
 )
@@ -65,7 +60,7 @@ class KeyboardController(QObject):
         self.glyph_controller: GlyphController        = conductor.glyph_controller
         self.playback_manager: Player.PlaybackManager = conductor.playback_manager
 
-        self.move_increment = Constants.CurrentSettings["arrow_increment"]
+        self.move_increment = Constants.CURRENT_SETTINGS["arrow_increment"]
         self.shortcuts      = []
 
         self.base_shortcuts = [
@@ -161,8 +156,8 @@ class WheelController:
         self.scroll_velocity        = 0
         self.scroll_target_velocity = 0
 
-        self.zoom_step           = Constants.CurrentSettings["zoom_step"]
-        self.scroll_acceleration = Constants.CurrentSettings["scroll_acceleration"]
+        self.zoom_step           = Constants.CURRENT_SETTINGS["zoom_step"]
+        self.scroll_acceleration = Constants.CURRENT_SETTINGS["scroll_acceleration"]
 
         self.scroll_timer = Basic.Timer(
             Constants.FPS_120,

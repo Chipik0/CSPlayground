@@ -1,9 +1,7 @@
 import random
 import string
 
-from loguru import (
-    logger
-)
+from loguru import logger
 
 from PyQt5.QtGui import (
     QIcon,
@@ -41,13 +39,10 @@ from System.Common import (
     Styles
 )
 
-from System.Interface import (
-    Basic
-)
+from System.Interface import Basic
+from System.Services import Player
 
-from System.Common.Constants import (
-    CurrentSettings
-)
+from System.Common.Constants import CURRENT_SETTINGS
 
 class NavButton(QAbstractButton):
     def __init__(
@@ -137,7 +132,7 @@ class Textbox(QLineEdit):
         self.original_text = super().text()
     
     def setup_animations(self) -> None:
-        self.animations_enabled = CurrentSettings["textbox_animations"]
+        self.animations_enabled = CURRENT_SETTINGS["textbox_animations"]
         
         if not self.animations_enabled:
             return
@@ -223,7 +218,7 @@ class Textbox(QLineEdit):
             position  = self.cursorPosition() + direction
             tone      = 0.85 + (position / len(current_text)) * 0.4
             
-            Utils.ui_sound("ArrowTick", tone)
+            Player.ui_player.play_sound("ArrowTick", speed = tone)
             
             self.arrow_pressed   = True
             self.arrow_direction = direction
@@ -281,7 +276,7 @@ class Textbox(QLineEdit):
         if self.shake_animation.state() == QPropertyAnimation.Running:
             self.shake_animation.stop()
         
-        if CurrentSettings["textbox_animations"]:
+        if CURRENT_SETTINGS["textbox_animations"]:
             self.shake_animation.setStartValue(self.pos())
             self.shake_animation.setEndValue(self.original_textbox_position)
             self.shake_animation.setDuration(250)
@@ -469,7 +464,7 @@ class Textbox(QLineEdit):
             elif delta <= 1:
                 tone = 1.2
 
-        Utils.ui_sound("Tick", tone)
+        Player.ui_player.play_sound("Tick", speed = tone)
         
         if not self.animations_enabled:
             return
@@ -493,9 +488,9 @@ class Textbox(QLineEdit):
     ) -> None:
         
         if sound:
-            Utils.ui_sound("Reject")
+            Player.ui_player.play_sound("Reject")
         
-        if not CurrentSettings["textbox_animations"]:
+        if not CURRENT_SETTINGS["textbox_animations"]:
             return
         
         if self.glitch_timer.isActive():
@@ -648,7 +643,7 @@ class Selector(QWidget):
         count = len(self.group.buttons())
         tone  = ((id + 1) / count) ** 0.5 if count > 0 else 1.0
         
-        Utils.ui_sound("Toggles/Toggle", tone)
+        Player.ui_player.play_sound("Toggles/Toggle", speed = tone)
         self.selectionChanged.emit(id, button.text())
     
     # API
@@ -713,7 +708,7 @@ class Checkbox(QCheckBox):
         super().nextCheckState()
         
         tone = 1.0 if self.isChecked() else 0.9
-        Utils.ui_sound("Toggles/Toggle", tone)
+        Player.ui_player.play_sound("Toggles/Toggle", speed = tone)
 
 class BaseControlContainer(QWidget):
     def __init__(
@@ -846,7 +841,7 @@ class SelectorWithLabel(BaseControlContainer):
         count = len(self.group.buttons())
         tone  = ((id + 1) / count) ** 0.5
         
-        Utils.ui_sound("Toggles/Toggle", tone)
+        Player.ui_player.play_sound("Toggles/Toggle", speed = tone)
         self.selectionChanged.emit(id, button.text(), self.keys.get(id))
     
     # API
@@ -1065,7 +1060,7 @@ class SliderWithLabel(BaseControlContainer):
         
         if max_val < 20 and max_val > min_val:
             tone = (value - min_val) / (max_val - min_val) + 0.1
-            Utils.ui_sound("Toggles/Toggle2", tone)
+            Player.ui_player.play_sound("Toggles/Toggle2", speed = tone)
     
     def value(self) -> int:
         return self.slider.value()

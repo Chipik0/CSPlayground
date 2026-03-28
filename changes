@@ -3,6 +3,7 @@
 - Finalize compositor optimization.
 - Remake the turorial
 - New context menu
+- New settings
 - Import
 - Оптимизировать Glyph Receiver, добавить в Glyph Receiver поддержку keyframes
 
@@ -16,13 +17,13 @@ Encoder.py      100% | Done
 Inputs.py       100% | Done
 GlyphEffects.py 100% | Done
 LoomEngine.py   100% | Done
-Constants.py    100%
+Player.py       100% | Done
+Widgets.py      100% | Done
+Constants.py    100% | Done
 Menu.py         90%
 ProjectSaver.py 90%
 Basic.py        50%
-Player.py       E
 RTVisualizer.py E
-Widgets.py      E
 Windows.py      E
 Porter.py       B
 Styles.py       A
@@ -34,7 +35,13 @@ Utils.py        A
 - Улучшенная механика отображения Глифов. Значительно уменьшена вероятность рассинхронизации отображения.
 - Улучшения в работе Undo Redo механики.
 - Теперь, максимальная длина истории действий - 1000.
-- Исправлен лаг при копировании большого количества Глифов
+- Исправлен лаг при копировании большого количества Глифов.
+- Повышена стабильность ультра быстрого переключения между проектами.
+- Повышена стабильность UI звуков.
+- Полностью вырезан pygame.
+- Исправлен очень долгий запуск на MacOS.
+- Создана своя встроенная сборка FFmpeg весом 6 мб.
+- Вес значительно уменьшен.
 
 **New Shit**
 - Новый способ удобно управлять яркостью Глифов - Keyframes. Смотрите `Effect Menu` -> `Fade`.
@@ -52,3 +59,4 @@ Utils.py        A
 - Уменьшены лаги при вставке Глифов.
 - Значительно улучшена общая производительность при редактировании.
 - Улучшена отрисовка вейвформы.
+- 90% файлов изменены и оптимизированы.

@@ -9,19 +9,15 @@ import ffmpeg
 
 from collections.abc import Callable
 
-from System.Common import (
-    Utils
-)
-
-from System.Interface import (
-    Windows
-)
+from System.Common import Utils
+from System.Interface import Windows
 
 from System.Services import (
     Porter,
     Encoder,
+    Player,
     GlyphEffects,
-    RealTimeVisualizer,
+    RealTimeVisualizer
 )
 
 from System.Common.Constants import (
@@ -29,7 +25,7 @@ from System.Common.Constants import (
     FFMPEG_PATH,
     FFPROBE_PATH,
     PortVariants,
-    CurrentSettings,
+    CURRENT_SETTINGS,
     DEFAULT_DURATION,
     DEFAULT_BRIGHTNESS,
     number_model_to_code
@@ -37,7 +33,8 @@ from System.Common.Constants import (
 
 def get_metadata(file_path: str) -> tuple[str | None, str]:
     try:
-        probe = ffmpeg.probe(file_path, cmd=FFPROBE_PATH)
+        probe = ffmpeg.probe(file_path, cmd = FFPROBE_PATH)
+    
     except ffmpeg.Error:
         return None, "Unknown Artist"
 
@@ -346,10 +343,10 @@ class BaseComposition:
 
         if open_folder:
             Utils.open_file(os.path.abspath(Utils.get_songs_path(str(self.id))))
-            Utils.ui_sound("App/Export")
+            Player.ui_player.play_sound("App/Export")
 
     def export_all(self, watermark: str = "Cassette") -> None:
-        Utils.ui_sound("App/ExportLong")
+        Player.ui_player.play_sound("App/ExportLong")
         self.export(watermark)
 
         for model in PortVariants[self.model]:
@@ -389,7 +386,7 @@ class Composition(BaseComposition):
         self.glyphs        = SyncedDict(int_glyphs, sync_callback=self.syncer.sync, composition=self)
         self.last_glyph_id = max(self.glyphs.keys()) if self.glyphs else 0
 
-        if CurrentSettings["auto_search"]:
+        if CURRENT_SETTINGS["auto_search"]:
             self.syncer.start_scanning_loop()
 
         self.syncer.full_load(self.glyphs)

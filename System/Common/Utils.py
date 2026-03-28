@@ -7,10 +7,6 @@ import random
 import platform
 import subprocess
 
-from System.Services import (
-    Player
-)
-
 from urllib.request import (
     urlopen
 )
@@ -26,9 +22,9 @@ from PyQt5.QtCore import (
     QParallelAnimationGroup
 )
 
-import numpy as np
+from loguru import logger
 
-from System.Common.Constants import *
+import numpy as np
 
 def get_fox_image(url="https://randomfox.ca/floof/"):
     try:
@@ -142,20 +138,6 @@ def run(*args, **kwargs):
     
     return subprocess.run(*args, **kwargs)
 
-def ui_sound(name, tone = None, volume = 1.0, random_spread = 0.03, loop = False):
-    if CurrentSettings["disable_sounds"]:
-        return
-    
-    if not tone:
-        tone = random.uniform(1 - random_spread, 1 + random_spread)
-    
-    return Player.ui_player.play_sound(
-        name,
-        loop,
-        tone,
-        volume
-    )
-
 def auto_cast(value: str):
     if value is None:
         return None
@@ -201,7 +183,7 @@ class Animations:
         anim_group = QParallelAnimationGroup()
 
         if multiplier == 1.0:
-            multiplier = float(CurrentSettings["animation_multiplier"])
+            multiplier = float(CURRENT_SETTINGS["animation_multiplier"])
 
         if multiplier != 1.0:
             for animation in animations:
@@ -299,3 +281,39 @@ def parse_svg_path_data(d_string: str) -> QPainterPath:
             pass
     
     return path
+
+def get_resource_path(relative_path):
+    if getattr(sys, 'frozen', False):
+        base_path = getattr(sys, '_MEIPASS', os.path.dirname(sys.executable))
+    
+    else:
+        base_path = os.path.abspath(".")
+    
+    return os.path.join(base_path, relative_path)
+
+def get_ffmpeg_path(name = "ffmpeg"):
+    logger.debug(f"Searching for {name}...")
+
+    plat = sys.platform
+    arch = platform.machine().lower()
+    is_arm = "arm" in arch
+
+    logger.debug(f"Platform: {plat}")
+    logger.debug(arch)
+    logger.debug(f"Is ARM: {is_arm}")
+    
+    if plat == "win32":
+        file_name = f"{name}-windows.exe"
+    
+    elif plat == "darwin":
+        suffix = "silicon" if is_arm else "intel"
+        file_name = f"{name}-macos-{suffix}"
+    
+    elif plat == "linux":
+        file_name = f"{name}-linux"
+
+    full_path = get_resource_path(f"System/FFmpeg/{file_name}")
+
+    logger.success(f"Found {name}: {full_path}")
+
+    return full_path

@@ -1,12 +1,8 @@
 from __future__ import annotations
 
-from loguru import (
-    logger
-)
+from loguru import logger
 
-from PyQt5.QtGui import (
-    QIcon
-)
+from PyQt5.QtGui import QIcon
 
 from PyQt5.QtCore import (
     Qt,
@@ -20,9 +16,7 @@ from PyQt5.QtWidgets import (
     QVBoxLayout
 )
 
-from . import (
-    Timeline
-)
+from . import Timeline
 
 from System.Common import (
     Utils,
@@ -142,7 +136,6 @@ class CompositorWidget(QWidget):
     # Lifecycle
 
     def load_composition(self, composition: ProjectSaver.Composition) -> None:
-        self.playback_manager.cleanup()
         self.playback_manager.load_audio(composition.cropped_song_path)
         self.content_widget.load_composition(composition)
 
@@ -163,7 +156,7 @@ class CompositorWidget(QWidget):
         if self.playback_manager.is_playing:
             logger.warning("Stopping playback manager, taping")
             self.content_widget.playhead_timer.stop()
-            self.playback_manager.tape(end_speed=0.0, duration=1.5)
+            self.playback_manager.set_speed(0.0, 3000, Player.Easing.ease_out_quart)
 
         logger.warning("Stopping syncer")
         self.content_widget.composition.syncer.stop()

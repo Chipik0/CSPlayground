@@ -1,15 +1,15 @@
 from __future__ import annotations
 
-import bisect
 import math
+import bisect
 
 import numpy as np
 
 from PyQt5.QtCore import (
     Qt,
     QRect,
-    QPoint,
     QLineF,
+    QPoint,
     QRectF,
     QTimer,
     QPointF,
@@ -48,9 +48,7 @@ from PyQt5.QtWidgets import (
     QGraphicsSceneMouseEvent
 )
 
-from loguru import (
-    logger
-)
+from loguru import logger
 
 from System.Common import (
     Utils,
@@ -60,21 +58,13 @@ from System.Common import (
 from System.Common.Constants import (
     FPS_30,
     FPS_60,
-    CurrentSettings,
-    VISUAL_EASINGS
+    VISUAL_EASINGS,
+    CURRENT_SETTINGS
 )
 
-from System.Interface import (
-    Basic
-)
-
-from System.Interface.Animation import (
-    LoomEngine
-)
-
-from System.Services import (
-    Player
-)
+from System.Interface import Basic
+from System.Services import Player
+from System.Interface.Animation import LoomEngine
 
 class ValuePopup(QWidget):
     def __init__(
@@ -124,7 +114,7 @@ class ValuePopup(QWidget):
         
         painter = QPainter(self)
         
-        if CurrentSettings["antialiasing"]:
+        if CURRENT_SETTINGS["antialiasing"]:
             painter.setRenderHint(QPainter.Antialiasing)
 
         alpha = int(self.animation_engine.get_property_value("opacity") * 255)
@@ -248,11 +238,7 @@ class ValuePopup(QWidget):
 class MiniWaveformPreview(QWidget):
     preview_clicked = pyqtSignal(float)
 
-    def __init__(
-        self,
-        parent: QWidget | None = None
-    ) -> None:
-        
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
 
         self.audio             = None
@@ -269,22 +255,14 @@ class MiniWaveformPreview(QWidget):
 
     # Data
 
-    def set_audio_data(
-        self,
-        audio: np.ndarray
-    ) -> None:
-        
+    def set_audio_data(self, audio: np.ndarray) -> None:
         self.audio = audio
         
         self.prepare_audio_data()
         self.regenerate_pixmap()
         self.update()
 
-    def set_playhead_position(
-        self,
-        value: float
-    ) -> None:
-        
+    def set_playhead_position(self, value: float) -> None:
         self.playhead_position = float(np.clip(value, 0.0, 1.0))
         self.update()
 
@@ -298,13 +276,13 @@ class MiniWaveformPreview(QWidget):
             
             return
 
-        total         = audio.shape[0]
-        fade_in_len   = min(int(total * 0.03), total)
-        fade_out_len  = min(int(total * 0.03), max(0, total - fade_in_len))
-        processed     = audio.astype(np.float32, copy=True)
+        total          = audio.shape[0]
+        fade_in_length = min(int(total * 0.03), total)
+        fade_out_len   = min(int(total * 0.03), max(0, total - fade_in_length))
+        processed      = audio.astype(np.float32, copy = True)
 
-        if fade_in_len > 0:
-            processed[:fade_in_len, :] *= np.linspace(0.0, 1.0, fade_in_len, dtype=np.float32)[:, None]
+        if fade_in_length > 0:
+            processed[:fade_in_length, :] *= np.linspace(0.0, 1.0, fade_in_length, dtype=np.float32)[:, None]
 
         if fade_out_len > 0:
             processed[total - fade_out_len:, :] *= np.linspace(1.0, 0.0, fade_out_len, dtype=np.float32)[:, None]
@@ -327,13 +305,13 @@ class MiniWaveformPreview(QWidget):
         if min_samples.size == 0:
             return None
 
-        num_samples      = len(min_samples)
+        num_samples       = len(min_samples)
         samples_per_pixel = max(1, int(np.ceil(num_samples / float(width))))
-        pad_needed       = (-num_samples) % samples_per_pixel
+        pad_needed        = (-num_samples) % samples_per_pixel
 
         if pad_needed:
-            padded_min = np.pad(min_samples, (0, pad_needed), mode='constant')
-            padded_max = np.pad(max_samples, (0, pad_needed), mode='constant')
+            padded_min = np.pad(min_samples, (0, pad_needed), mode = 'constant')
+            padded_max = np.pad(max_samples, (0, pad_needed), mode = 'constant')
         
         else:
             padded_min = min_samples
@@ -346,7 +324,7 @@ class MiniWaveformPreview(QWidget):
         top      = y_center - (tile_max / waveform_max * y_center)
         bottom   = y_center - (tile_min / waveform_max * y_center)
 
-        sigma = float(CurrentSettings.get("waveform_smoothing", 0.0))
+        sigma = float(CURRENT_SETTINGS.get("waveform_smoothing", 0.0))
 
         if sigma > 0.0 and top.size > 1:
             pad    = min(int(np.ceil(sigma * 3.0)), top.size - 1)
@@ -368,7 +346,7 @@ class MiniWaveformPreview(QWidget):
         pixmap.fill(Qt.GlobalColor.transparent)
         painter = QPainter(pixmap)
 
-        if CurrentSettings.get("antialiasing"):
+        if CURRENT_SETTINGS.get("antialiasing"):
             painter.setRenderHint(QPainter.Antialiasing)
 
         bar_width = float(width) / float(top.size)
@@ -396,11 +374,7 @@ class MiniWaveformPreview(QWidget):
 
     # Events
 
-    def paintEvent(
-        self,
-        event: QPaintEvent
-    ) -> None:
-        
+    def paintEvent(self, event: QPaintEvent) -> None:
         painter = QPainter(self)
 
         if not self.pixmap:
@@ -417,11 +391,7 @@ class MiniWaveformPreview(QWidget):
         
         painter.end()
 
-    def mousePressEvent(
-        self,
-        event: QMouseEvent
-    ) -> None:
-        
+    def mousePressEvent(self, event: QMouseEvent) -> None:
         if not self.pixmap:
             super().mousePressEvent(event)
             return
@@ -438,11 +408,7 @@ class MiniWaveformPreview(QWidget):
 
         super().mousePressEvent(event)
 
-    def mouseMoveEvent(
-        self,
-        event: QMouseEvent
-    ) -> None:
-        
+    def mouseMoveEvent(self, event: QMouseEvent) -> None:
         normalized = float(np.clip(event.x() / float(max(1, self.width())), 0.0, 1.0))
         
         self.set_playhead_position(normalized)
@@ -450,33 +416,20 @@ class MiniWaveformPreview(QWidget):
         
         super().mouseMoveEvent(event)
 
-    def mouseReleaseEvent(
-        self,
-        event: QMouseEvent
-    ) -> None:
-        
+    def mouseReleaseEvent(self, event: QMouseEvent) -> None:
         self.mouse_pressed = False
         super().mouseReleaseEvent(event)
 
-    def resizeEvent(
-        self,
-        event: QResizeEvent
-    ) -> None:
-        
+    def resizeEvent(self, event: QResizeEvent) -> None:
         super().resizeEvent(event)
         
         if self.isVisible():
             self.regenerate_pixmap()
             self.update()
 
-    def showEvent(
-        self,
-        event: QShowEvent
-    ) -> None:
-        
+    def showEvent(self, event: QShowEvent) -> None:
         super().showEvent(event)
         self.regenerate_pixmap()
-
 
 class BaseSegmentedBar(QWidget):
     RADIUS = 10.0
@@ -484,7 +437,7 @@ class BaseSegmentedBar(QWidget):
     def __init__(
         self,
         number_of_segments: int,
-        base_thickness: int
+        base_thickness:     int
     ) -> None:
 
         super().__init__()
@@ -503,7 +456,12 @@ class BaseSegmentedBar(QWidget):
         last   = amount - 1
 
         self.cached_paths = [
-            self.build_segment_path(i, width, height, last)
+            self.build_segment_path(
+                i,
+                width,
+                height,
+                last
+            )
             for i in range(amount)
         ]
 
@@ -543,6 +501,7 @@ class BaseSegmentedBar(QWidget):
             return path
 
         path.addRect(rect)
+
         return path
 
     # Helpers
@@ -565,11 +524,7 @@ class BaseSegmentedBar(QWidget):
 
     # Events
 
-    def paintEvent(
-        self,
-        event: QPaintEvent
-    ) -> None:
-        
+    def paintEvent(self, event: QPaintEvent) -> None:
         if len(self.cached_paths) != self.amount_of_segments:
             self.update_paths()
 
@@ -581,17 +536,11 @@ class BaseSegmentedBar(QWidget):
             painter.setBrush(self.segment_color(i))
             painter.drawPath(path)
 
-    def resizeEvent(
-        self,
-        event: QResizeEvent
-    ) -> None:
-        
+    def resizeEvent(self, event: QResizeEvent) -> None:
         super().resizeEvent(event)
         self.update_paths()
 
-
 class ScheduledSegmentedBar(BaseSegmentedBar):
-    
     def __init__(
         self,
         number_of_segments: int  = 30,
@@ -622,21 +571,18 @@ class ScheduledSegmentedBar(BaseSegmentedBar):
 
     # Override
 
-    def segment_color(
-        self,
-        index: int
-    ) -> QColor:
-        
+    def segment_color(self, index: int) -> QColor:
         t = max(0.0, min(self.levels[index] / 100.0, 1.0))
-        return self.blend_color(self.color_off, self.color_on, t)
+
+        return self.blend_color(
+            self.color_off,
+            self.color_on,
+            t
+        )
 
     # API
 
-    def set_schedule(
-        self,
-        schedule: list
-    ) -> None:
-        
+    def set_schedule(self, schedule: list) -> None:
         self.schedule    = schedule or []
         self.duration_ms = max(
             (
@@ -646,21 +592,13 @@ class ScheduledSegmentedBar(BaseSegmentedBar):
             default = 0
         )
 
-    def play(
-        self,
-        start_offset_ms: int = 0
-    ) -> None:
-        
+    def play(self, start_offset_ms: int = 0) -> None:
         self.start_offset = int(start_offset_ms)
         
         self.elapsed_timer.start()
         self.timer.start()
 
-    def stop(
-        self,
-        clear_levels: bool = True
-    ) -> None:
-        
+    def stop(self,clear_levels: bool = True) -> None:
         self.timer.stop()
         
         if clear_levels:
@@ -686,11 +624,7 @@ class ScheduledSegmentedBar(BaseSegmentedBar):
 
     # Helpers
 
-    def active_indices(
-        self,
-        item: dict
-    ) -> range:
-        
+    def active_indices(self, item: dict) -> range:
         segments = item.get("segments")
         
         if not segments:
@@ -792,11 +726,7 @@ class SegmentedBar(BaseSegmentedBar):
 
     # Override
 
-    def segment_color(
-        self,
-        index: int
-    ) -> QColor:
-        
+    def segment_color(self, index: int) -> QColor:
         if self.active[index]:
             return QColor("#ddd")
         
@@ -807,11 +737,7 @@ class SegmentedBar(BaseSegmentedBar):
 
     # Events
 
-    def mousePressEvent(
-        self,
-        event: QMouseEvent
-    ) -> None:
-        
+    def mousePressEvent(self, event: QMouseEvent) -> None:
         self.is_pressed = True
         index           = self.get_index(event.x())
 
@@ -827,20 +753,12 @@ class SegmentedBar(BaseSegmentedBar):
         self.segment_changed.emit()
         self.update()
 
-    def mouseReleaseEvent(
-        self,
-        event: QMouseEvent
-    ) -> None:
-        
+    def mouseReleaseEvent(self, event: QMouseEvent) -> None:
         self.is_pressed  = False
         self.last_index  = None
         self.drag_target = None
 
-    def mouseMoveEvent(
-        self,
-        event: QMouseEvent
-    ) -> None:
-        
+    def mouseMoveEvent(self, event: QMouseEvent) -> None:
         if self.amount_of_segments <= 0:
             return
 
@@ -854,19 +772,11 @@ class SegmentedBar(BaseSegmentedBar):
 
     # Helpers
 
-    def get_index(
-        self,
-        x_position: int
-    ) -> int:
-        
+    def get_index(self, x_position: int) -> int:
         segment_width = self.width() / self.amount_of_segments
         return max(0, min(self.amount_of_segments - 1, int(x_position / segment_width)))
 
-    def handle_drag(
-        self,
-        index: int
-    ) -> None:
-        
+    def handle_drag(self, index: int) -> None:
         if index == self.last_index:
             return
 
@@ -908,7 +818,7 @@ class SegmentedBar(BaseSegmentedBar):
         tone  = index / self.amount_of_segments + 0.5
         tone += 0.05 if self.active[index] else 0.0
         
-        Utils.ui_sound("Toggles/Toggle3" if alt else "Toggles/Toggle", tone)
+        Player.ui_player.play_sound("Toggles/Toggle3" if alt else "Toggles/Toggle", speed = tone)
 
     # API
 
@@ -916,19 +826,19 @@ class SegmentedBar(BaseSegmentedBar):
         self.active = [True] * self.amount_of_segments
         self.segment_changed.emit()
         
-        Utils.ui_sound("Toggles/Toggle", 1.0)
+        Player.ui_player.play_sound("Toggles/Toggle", speed=1.0, enable_tone_randomizer=False)
 
     def disable_all(self) -> None:
         self.active = [False] * self.amount_of_segments
         self.segment_changed.emit()
         
-        Utils.ui_sound("Toggles/Toggle", 0.7)
+        Player.ui_player.play_sound("Toggles/Toggle", speed=0.7, enable_tone_randomizer=False)
 
     def zebra(self) -> None:
         self.active = [i % 2 == 0 for i in range(self.amount_of_segments)]
         self.segment_changed.emit()
         
-        Utils.ui_sound("Toggles/Toggle3")
+        Player.ui_player.play_sound("Toggles/Toggle3")
 
 class PlayheadItem(QGraphicsItem):
     
@@ -977,7 +887,7 @@ class MarqueeItem(QGraphicsObject):
 
         self.player      = player
         self.bpm         = 120.0
-        self.start_pos   = QPointF()
+        self.start_position   = QPointF()
         self.marquee_pen = QPen(
             QColor(215, 20, 31), 1,
             Qt.PenStyle.DashLine
@@ -1013,7 +923,11 @@ class MarqueeItem(QGraphicsObject):
 
     # Events
     
-    def itemChange(self, change, value):
+    def itemChange(
+        self,
+        change: QGraphicsItem.GraphicsItemChange,
+        value:  any
+    ) -> any:
         if change == QGraphicsItem.GraphicsItemChange.ItemVisibleHasChanged:
             if value:
                 self.bpm_animation_timer.start(FPS_30)
@@ -1026,7 +940,7 @@ class MarqueeItem(QGraphicsObject):
         mouse_point = self.animation_engine.get_property_value("mouse_point")
         
         return QRectF(
-            self.start_pos,
+            self.start_position,
             mouse_point
         ).normalized()
 
@@ -1054,7 +968,7 @@ class MarqueeItem(QGraphicsObject):
         pen_alpha   = self.animation_engine.get_property_value("pen_opacity")
         mouse_point = self.animation_engine.get_property_value("mouse_point")
 
-        rect   = QRectF(self.start_pos, mouse_point).normalized()
+        rect   = QRectF(self.start_position, mouse_point).normalized()
         radius = min((rect.width() + rect.height()) / 12, 10)
 
         brush_color = QColor(255, 0, 0)
@@ -1076,11 +990,27 @@ class MarqueeItem(QGraphicsObject):
     def fade_in(self) -> None:
         self.animation_engine.resume()
 
-        self.animation_engine.animate("brush_opacity", [(0.0, 0.0), (1.0, 1.0)], 300, LoomEngine.Easing.ease_out_cubic)
-        self.animation_engine.animate("pen_opacity",   [(0.0, 0.0), (1.0, 1.0)], 300, LoomEngine.Easing.ease_out_cubic)
+        self.animation_engine.animate(
+            "brush_opacity",
+            [
+                (0.0, 0.0),
+                (1.0, 1.0)
+            ],
+            300,
+            LoomEngine.Easing.ease_out_cubic
+        )
+
+        self.animation_engine.animate(
+            "pen_opacity", [
+                (0.0, 0.0),
+                (1.0, 1.0)
+            ],
+            300,
+            LoomEngine.Easing.ease_out_cubic
+        )
 
     def fade_out(self) -> None:
-        if not CurrentSettings["marquee_hide_animation"]:
+        if not CURRENT_SETTINGS["marquee_hide_animation"]:
             self.animation_engine.set_property_base_value("brush_opacity", 0.0)
             self.animation_engine.set_property_base_value("pen_opacity",   0.0)
             
@@ -1110,40 +1040,28 @@ class MarqueeItem(QGraphicsObject):
 
     # API
 
-    def set_bpm(
-        self,
-        bpm: float
-    ) -> None:
-        
+    def set_bpm(self, bpm: float) -> None:
         self.bpm = bpm
 
-    def start_marquee(
-        self,
-        start_point: QPointF
-    ) -> None:
-        
-        self.start_pos = start_point
+    def start_marquee(self, start_point: QPointF) -> None:
+        self.start_position = start_point
         
         self.animation_engine.set_property_base_value("mouse_point", start_point)
         
         self.fade_in()
         self.show()
 
-        if CurrentSettings["bpm_animations"]:
+        if CURRENT_SETTINGS["bpm_animations"]:
             self.bpm_tick()
 
     def end_marquee(self) -> None:
         self.fade_out()
 
-    def update_end_point(
-        self,
-        point: QPointF
-    ) -> None:
-        
+    def update_end_point(self, point: QPointF) -> None:
         self.animation_engine.set_target_value("mouse_point", point, 150, LoomEngine.Easing.ease_out_cubic)
 
         path = QPainterPath()
-        path.addRect(QRectF(self.start_pos, point).normalized())
+        path.addRect(QRectF(self.start_position, point).normalized())
 
         modifiers = QApplication.keyboardModifiers()
         
@@ -1176,7 +1094,7 @@ class MarqueeItem(QGraphicsObject):
         if self.player.get_current_audio_level() < 0.08:
             return self.bpm_animation_timer.start(FPS_30)
 
-        speed           = self.player.speed or 1.0
+        speed       = self.player.speed or 1.0
         interval_ms = int(round(60000.0 / (self.bpm * speed)))
 
         self.animation_engine.animate(
@@ -1192,11 +1110,10 @@ class MarqueeItem(QGraphicsObject):
         self.bpm_animation_timer.start(interval_ms)
 
 class GlyphItem(QGraphicsObject):
-    
     def __init__(
         self,
         glyph_id:      int,
-        conductor,
+        conductor:     ScrollableContent,
         animate_spawn: bool = True
     ) -> None:
         
@@ -1212,7 +1129,7 @@ class GlyphItem(QGraphicsObject):
         self.is_despawning     = False
         self.border_width      = 2.5
         self.resize_margin     = 10
-        self.drag_start_pos    = QPointF()
+        self.drag_start_position    = QPointF()
         self.interaction_mode  = None
 
         self.setup_animations()
@@ -1220,7 +1137,7 @@ class GlyphItem(QGraphicsObject):
         self.setup_timers()
         self.setup_keyframes()
 
-        self.dirty_rect        = self.boundingRect()
+        self.dirty_rect = self.boundingRect()
 
         self.update_geometry()
         self.spawn_animation(animate_spawn)
@@ -1313,8 +1230,8 @@ class GlyphItem(QGraphicsObject):
 
         self.border_opacity                = 0.0
 
-        self.despawn_duration_ms = None
-        self.despawn_start_ms    = None
+        self.despawn_duration_ms           = None
+        self.despawn_start_ms              = None
 
     # Geometry & Metrics
 
@@ -1331,18 +1248,10 @@ class GlyphItem(QGraphicsObject):
         
         return track_top + offset
 
-    def ms_to_px(
-        self,
-        ms: float
-    ) -> float:
-        
+    def ms_to_px(self, ms: float) -> float:
         return ms * self.conductor.px_per_sec / 1000.0
 
-    def px_to_ms(
-        self,
-        px: float
-    ) -> float:
-        
+    def px_to_ms(self, px: float) -> float:
         return px * 1000.0 / self.conductor.px_per_sec
 
     def boundingRect(self) -> QRectF:
@@ -1370,7 +1279,7 @@ class GlyphItem(QGraphicsObject):
         widget:  QWidget = None
     ) -> None:
         
-        width_px = self.ms_to_px(self.duration_ms)
+        width_px     = self.ms_to_px(self.duration_ms)
         height       = Styles.Metrics.Tracks.box_height
 
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
@@ -1388,7 +1297,7 @@ class GlyphItem(QGraphicsObject):
     def apply_paint_transforms(
         self,
         painter:      QPainter,
-        width_px: float,
+        width_px:     float,
         height:       float
     ) -> None:
         
@@ -1413,7 +1322,7 @@ class GlyphItem(QGraphicsObject):
     def draw_base_shape(
         self,
         painter:      QPainter,
-        width_px: float,
+        width_px:     float,
         height:       float
     ) -> None:
         
@@ -1430,7 +1339,7 @@ class GlyphItem(QGraphicsObject):
     def draw_fade_keyframes(
         self,
         painter:      QPainter,
-        width_px: float,
+        width_px:     float,
         height:       float
     ) -> None:
         
@@ -1500,7 +1409,7 @@ class GlyphItem(QGraphicsObject):
         self.animation_group = QParallelAnimationGroup(self)
 
         if multiplier == 1.0:
-            multiplier = float(CurrentSettings["animation_multiplier"])
+            multiplier = float(CURRENT_SETTINGS["animation_multiplier"])
 
         for animation in animations:
             if multiplier != 1.0:
@@ -1516,11 +1425,7 @@ class GlyphItem(QGraphicsObject):
 
         self.animation_group.start()
 
-    def set_animating(
-        self,
-        active: bool
-    ) -> None:
-        
+    def set_animating(self, active: bool) -> None:
         if self.is_animating == active:
             return
         
@@ -1556,15 +1461,11 @@ class GlyphItem(QGraphicsObject):
         self.fade_out.finished.connect(self.fade_out_callback)
         self.fade_out.start()
 
-    def spawn_animation(
-        self,
-        animate: bool = True
-    ) -> None:
-        
+    def spawn_animation(self, animate: bool = True) -> None:
         if not animate:
             return
         
-        if not CurrentSettings["glyph_spawn_animation"]:
+        if not CURRENT_SETTINGS["glyph_spawn_animation"]:
             return
         
         self.set_animating(True)
@@ -1628,12 +1529,8 @@ class GlyphItem(QGraphicsObject):
         self.marquee_scale_animation.finished.connect(lambda: self.set_animating(False))
         self.marquee_scale_animation.start()
 
-    def press_animation(
-        self,
-        position: QPointF
-    ) -> None:
-        
-        if not CurrentSettings["glyph_tilt_animation"]:
+    def press_animation(self, position: QPointF) -> None:
+        if not CURRENT_SETTINGS["glyph_tilt_animation"]:
             return
 
         target_tilt_x, target_tilt_y = self.calculate_target_tilt(position)
@@ -1675,11 +1572,7 @@ class GlyphItem(QGraphicsObject):
         return self.border_opacity
 
     @borderOpacity.setter
-    def borderOpacity(
-        self,
-        value: float
-    ) -> None:
-        
+    def borderOpacity(self, value: float) -> None:
         self.border_opacity = value
         self.update()
 
@@ -1688,11 +1581,7 @@ class GlyphItem(QGraphicsObject):
         return self.tilt_y
 
     @tiltY.setter
-    def tiltY(
-        self,
-        value: float
-    ) -> None:
-        
+    def tiltY(self, value: float) -> None:
         self.tilt_y = value
         self.update()
 
@@ -1701,11 +1590,7 @@ class GlyphItem(QGraphicsObject):
         return self.tilt_x
 
     @tiltX.setter
-    def tiltX(
-        self,
-        value: float
-    ) -> None:
-        
+    def tiltX(self, value: float) -> None:
         self.tilt_x = value
         self.update()
 
@@ -1714,11 +1599,7 @@ class GlyphItem(QGraphicsObject):
         return self.spawn_scale
 
     @spawnScale.setter
-    def spawnScale(
-        self,
-        value: float
-    ) -> None:
-        
+    def spawnScale(self, value: float) -> None:
         self.spawn_scale = value
         self.update()
 
@@ -1727,11 +1608,7 @@ class GlyphItem(QGraphicsObject):
         return self.despawn_scale
 
     @despawnScale.setter
-    def despawnScale(
-        self,
-        value: float
-    ) -> None:
-        
+    def despawnScale(self, value: float) -> None:
         self.despawn_scale = value
         self.update()
 
@@ -1740,41 +1617,25 @@ class GlyphItem(QGraphicsObject):
         return self.marquee_selection_scale
 
     @marqueeSelectionScale.setter
-    def marqueeSelectionScale(
-        self,
-        value: float
-    ) -> None:
-        
+    def marqueeSelectionScale(self, value: float) -> None:
         self.marquee_selection_scale = value
         self.update()
 
     # Events
 
-    def hoverEnterEvent(
-        self,
-        event: QGraphicsSceneHoverEvent
-    ) -> None:
-        
+    def hoverEnterEvent(self, event: QGraphicsSceneHoverEvent) -> None:
         if not self.conductor.glyph_controller.drag_session:
             self.hover_timer.start()
         
         super().hoverEnterEvent(event)
 
-    def hoverLeaveEvent(
-        self,
-        event: QGraphicsSceneHoverEvent
-    ) -> None:
-        
+    def hoverLeaveEvent(self, event: QGraphicsSceneHoverEvent) -> None:
         self.hover_timer.stop()
         self.conductor.tooltip.hide_tooltip()
         
         super().hoverLeaveEvent(event)
 
-    def hoverMoveEvent(
-        self,
-        event: QGraphicsSceneHoverEvent
-    ) -> None:
-        
+    def hoverMoveEvent(self, event: QGraphicsSceneHoverEvent) -> None:
         x            = event.pos().x()
         visual_width = self.ms_to_px(self.duration_ms)
         hit_margin   = self.resize_margin
@@ -1816,11 +1677,7 @@ class GlyphItem(QGraphicsObject):
 
         return super().itemChange(change, value)
 
-    def mousePressEvent(
-        self,
-        event: QGraphicsSceneMouseEvent
-    ) -> None:
-        
+    def mousePressEvent(self, event: QGraphicsSceneMouseEvent) -> None:
         if self.is_despawning:
             return
         
@@ -1843,11 +1700,7 @@ class GlyphItem(QGraphicsObject):
 
         self.standard_press(event)
 
-    def mouseMoveEvent(
-        self,
-        event: QGraphicsSceneMouseEvent
-    ) -> None:
-        
+    def mouseMoveEvent(self, event: QGraphicsSceneMouseEvent) -> None:
         if self.is_despawning:
             return
         
@@ -1860,7 +1713,7 @@ class GlyphItem(QGraphicsObject):
 
         self.conductor.mouse_controller.auto_scroller.process_pos(event.screenPos())
 
-        delta_px = event.scenePos().x() - self.drag_start_pos.x()
+        delta_px = event.scenePos().x() - self.drag_start_position.x()
         
         self.conductor.glyph_controller.update_drag_state(
             self.px_to_ms(delta_px),
@@ -1868,11 +1721,7 @@ class GlyphItem(QGraphicsObject):
             self
         )
 
-    def mouseReleaseEvent(
-        self,
-        event: QGraphicsSceneMouseEvent
-    ) -> None:
-        
+    def mouseReleaseEvent(self, event: QGraphicsSceneMouseEvent) -> None:
         if self.is_despawning:
             return
 
@@ -1898,12 +1747,8 @@ class GlyphItem(QGraphicsObject):
 
     # Event Helpers
 
-    def standard_press(
-        self,
-        event: QGraphicsSceneMouseEvent
-    ) -> None:
-        
-        self.drag_start_pos   = event.scenePos()
+    def standard_press(self, event: QGraphicsSceneMouseEvent) -> None:
+        self.drag_start_position   = event.scenePos()
         self.interaction_mode = None
         
         self.press_animation(event.pos())
@@ -1916,11 +1761,7 @@ class GlyphItem(QGraphicsObject):
         
         event.accept()
 
-    def determine_interaction_mode(
-        self,
-        x_position: float
-    ) -> None:
-        
+    def determine_interaction_mode(self, x_position: float) -> None:
         visual_width = self.ms_to_px(self.duration_ms)
 
         if x_position < self.resize_margin:
@@ -1933,12 +1774,8 @@ class GlyphItem(QGraphicsObject):
             self.interaction_mode = 'move'
             self.setCursor(Qt.CursorShape.ClosedHandCursor)
 
-    def handle_fade_press(
-        self,
-        event: QGraphicsSceneMouseEvent
-    ) -> None:
-        
-        width_px = self.ms_to_px(self.duration_ms) - self.keyframe_line_padding * 2
+    def handle_fade_press(self, event: QGraphicsSceneMouseEvent) -> None:
+        width_px     = self.ms_to_px(self.duration_ms) - self.keyframe_line_padding * 2
         height       = Styles.Metrics.Tracks.box_height
         position     = event.pos()
         click_radius = 8.0
@@ -1969,11 +1806,7 @@ class GlyphItem(QGraphicsObject):
         self.update()
         event.accept()
 
-    def handle_fade_delete(
-        self,
-        event: QGraphicsSceneMouseEvent
-    ) -> None:
-        
+    def handle_fade_delete(self, event: QGraphicsSceneMouseEvent) -> None:
         width_px = self.ms_to_px(self.duration_ms) - self.keyframe_line_padding * 2
         height       = Styles.Metrics.Tracks.box_height
         position     = event.pos()
@@ -2004,11 +1837,7 @@ class GlyphItem(QGraphicsObject):
             
             return
 
-    def handle_fade_move(
-        self,
-        event: QGraphicsSceneMouseEvent
-    ) -> None:
-        
+    def handle_fade_move(self, event: QGraphicsSceneMouseEvent) -> None:
         if not self.fade_dragging:
             return
         
@@ -2042,11 +1871,7 @@ class GlyphItem(QGraphicsObject):
         self.update()
         event.accept()
 
-    def calculate_target_tilt(
-        self,
-        position: QPointF
-    ) -> tuple[float, float]:
-        
+    def calculate_target_tilt(self, position: QPointF) -> tuple[float, float]:
         width_px  = self.ms_to_px(self.duration_ms)
         height_px = Styles.Metrics.Tracks.box_height
         center_x      = width_px  / 2
@@ -2080,7 +1905,7 @@ class GlyphItem(QGraphicsObject):
         self.prepare_for_despawn()
         self.is_despawning = True
 
-        if CurrentSettings["glyph_spawn_animation"] and animate:
+        if CURRENT_SETTINGS["glyph_spawn_animation"] and animate:
             self.despawn_animation()
         
         else:
@@ -2106,11 +1931,7 @@ class GlyphItem(QGraphicsObject):
 class TrimmingWaveformWidget(QWidget):
     regionChanged = pyqtSignal(float, float)
 
-    def __init__(
-        self,
-        parent: QWidget | None = None
-    ) -> None:
-        
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
 
         self.duration            = 0.0
@@ -2174,11 +1995,7 @@ class TrimmingWaveformWidget(QWidget):
         self.playback_position = max(0.0, min(self.duration, position))
         self.update()
 
-    def set_is_playing(
-        self,
-        is_playing: bool
-    ) -> None:
-        
+    def set_is_playing(self, is_playing: bool) -> None:
         self.is_playing = is_playing
 
     # Rendering
@@ -2194,7 +2011,7 @@ class TrimmingWaveformWidget(QWidget):
         pixmap.fill(QColor(Styles.Colors.Floating.background))
         painter = QPainter(pixmap)
 
-        if CurrentSettings["antialiasing"]:
+        if CURRENT_SETTINGS["antialiasing"]:
             painter.setRenderHint(QPainter.Antialiasing)
 
         x_step    = width / count
@@ -2235,16 +2052,12 @@ class TrimmingWaveformWidget(QWidget):
 
     # Painting
 
-    def paintEvent(
-        self,
-        event: QPaintEvent
-    ) -> None:
-        
+    def paintEvent(self, event: QPaintEvent) -> None:
         super().paintEvent(event)
         
         painter = QPainter(self)
         
-        if CurrentSettings["antialiasing"]:
+        if CURRENT_SETTINGS["antialiasing"]:
             painter.setRenderHint(QPainter.Antialiasing)
 
         if self.is_loading:
@@ -2287,11 +2100,7 @@ class TrimmingWaveformWidget(QWidget):
 
     # Events
 
-    def mousePressEvent(
-        self,
-        event: QMouseEvent
-    ) -> None:
-        
+    def mousePressEvent(self, event: QMouseEvent) -> None:
         x       = event.pos().x()
         start_x = (self.start_time / self.duration) * self.width() if self.duration > 0 else 0
         end_x   = (self.end_time   / self.duration) * self.width() if self.duration > 0 else 0
@@ -2311,11 +2120,7 @@ class TrimmingWaveformWidget(QWidget):
                 self.set_playback_position(time_position)
                 logger.info(f"Placed playback on {time_position}")
 
-    def mouseMoveEvent(
-        self,
-        event: QMouseEvent
-    ) -> None:
-        
+    def mouseMoveEvent(self, event: QMouseEvent) -> None:
         if not self.dragging_handle:
             return
 
@@ -2337,9 +2142,5 @@ class TrimmingWaveformWidget(QWidget):
         self.regionChanged.emit(self.start_time, self.end_time)
         self.update()
 
-    def mouseReleaseEvent(
-        self,
-        event: QMouseEvent
-    ) -> None:
-        
+    def mouseReleaseEvent(self, event: QMouseEvent) -> None:
         self.dragging_handle = None

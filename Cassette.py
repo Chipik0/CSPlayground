@@ -74,7 +74,7 @@ from System.Interface import (
 from System.Common.Constants import (
     SettingsDict,
     load_settings,
-    CurrentSettings,
+    CURRENT_SETTINGS,
     prepare_default_settings,
 )
 
@@ -177,11 +177,11 @@ class EasterEggManager:
         self.shake_stop_timer.stop()
         self.shake_stop_timer.start()
 
-        sound_index = min(5, self.shake_direction_changes // 2)
-        if sound_index < 1:
-            sound_index = random.randint(1, 5)
+        sound_index = random.randint(1, 5)
 
-        Utils.ui_sound(f"Packs/NOK/Shake{sound_index}", random_spread = 0.35)
+        Player.ui_player.play_sound(f"Packs/NOK/Shake{sound_index}", tone_spread = 0.35)
+        print(sound_index)
+
         self.shake_sound_count += 1
 
         if self.shake_sound_count > 50:
@@ -228,7 +228,8 @@ class EasterEggManager:
 
             volume     = max(0.1, min(1.0, (velocity - MIN_VELOCITY) / (MAX_VELOCITY - MIN_VELOCITY)))
             sound_type = "Out" if current_direction > 0 else "In"
-            Utils.ui_sound(f"Packs/NOK/Accordion{sound_type}", volume = volume)
+
+            Player.ui_player.play_sound(f"Packs/NOK/Accordion{sound_type}", volume = volume)
 
         self.last_area           = current_area
         self.last_accordion_time = now
@@ -300,7 +301,7 @@ class StartupFadeOverlay(QWidget):
         self.setGeometry(self.parent().rect())
         self.show()
 
-        is_first_start = CurrentSettings.get("new_user", True)
+        is_first_start = CURRENT_SETTINGS.get("new_user", True)
         wait_time      = default_hold_ms
         self.font      = Utils.NType(30 if is_first_start else 10)
 
@@ -313,16 +314,19 @@ class StartupFadeOverlay(QWidget):
             settings.sync()
             load_settings()
 
-            Utils.ui_sound("App/Startup")
+            Player.ui_player.play_sound("App/Startup")
             QTimer.singleShot(wait_time, self.bg_anim.start)
+
             logger.debug(f"Startup overlay configured in {(time.perf_counter() - overlay_start) * 1000:.2f}ms")
+            
             return
 
         egg = EasterEggManager.get_startup_egg()
 
         if not egg:
-            Utils.ui_sound("App/Startup", volume = 1.0)
+            Player.ui_player.play_sound("App/Startup")
             QTimer.singleShot(wait_time, self.bg_anim.start)
+            
             return
 
         content   = egg["content"]
@@ -349,10 +353,11 @@ class StartupFadeOverlay(QWidget):
             self.bg_anim.setDuration(egg["fade"])
 
         if "sound" in egg:
-            Utils.ui_sound(egg["sound"], 1.0)
+            Player.ui_player.play_sound(egg["sound"], enable_tone_randomizer = False)
 
-        Utils.ui_sound("App/Startup")
+        Player.ui_player.play_sound("App/Startup")
         QTimer.singleShot(wait_time, self.bg_anim.start)
+        
         logger.debug(f"Startup overlay configured in {(time.perf_counter() - overlay_start) * 1000:.2f}ms")
 
     def on_bg_anim_finished(self) -> None:
@@ -476,7 +481,7 @@ class ApplicationWindow(QMainWindow):
         self.entry_fade_animation.setStartValue(0.0)
         self.entry_fade_animation.setEndValue(1.0)
 
-        Utils.ui_sound("App/Eject")
+        Player.ui_player.play_sound("App/Eject")
         self.entry_move_animation.start()
         self.entry_fade_animation.start()
 
@@ -493,28 +498,39 @@ class ApplicationWindow(QMainWindow):
         self.hide()
 
         content    = self.compositor_widget.content_widget
-        multiplier = CurrentSettings.get("animation_multiplier", 1.0)
+        multiplier = CURRENT_SETTINGS.get("animation_multiplier", 1.0)
 
         if content.composition:
             content.composition.syncer.exit_app()
 
         if Player.player.is_playing and content.global_waveform_max > 1e-6:
-            Player.player.tape(end_speed = 0.0, duration = 3.0, shutdown_on_finish = True)
+            Player.player.set_speed(0.0, 3000, shutdown_on_finish = True)
 
             close_vis_timeout = int(multiplier * 1700)
             QTimer.singleShot(
                 close_vis_timeout,
-                lambda: (Utils.ui_sound("App/Close"), content.glyph_visualizer.exit(False))
+                lambda: (Player.ui_player.play_sound("App/Close"), content.glyph_visualizer.exit(False))
             )
+            
             QTimer.singleShot(close_vis_timeout + 1500, QApplication.instance().quit)
+            
             return
 
         close_duration = 1800
+
         if content.composition:
-            Utils.ui_sound("App/Close")
+            Player.ui_player.play_sound("App/Close")
             content.glyph_visualizer.exit(False)
 
         QTimer.singleShot(int(close_duration * multiplier), QApplication.instance().quit)
+    
+    def moveEvent(self, event):
+        self.ee_manager.handle_shake(self.x(), self.y())
+        super().moveEvent(event)
+
+    def resizeEvent(self, event):
+        self.ee_manager.handle_resize_accordion(self.width(), self.height())
+        super().resizeEvent(event)
 
 # Entry Point
 
@@ -526,8 +542,8 @@ def main() -> None:
     surface_format.setVersion(4, 1)
     surface_format.setProfile(QSurfaceFormat.OpenGLContextProfile.CoreProfile)
 
-    if CurrentSettings.get("msaa"):
-        surface_format.setSamples(CurrentSettings["msaa"])
+    if CURRENT_SETTINGS.get("msaa"):
+        surface_format.setSamples(CURRENT_SETTINGS["msaa"])
 
     QSurfaceFormat.setDefaultFormat(surface_format)
 

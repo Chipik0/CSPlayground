@@ -1,69 +1,69 @@
-from loguru import (
-    logger
-)
+import sys
+import stat
+import platform
 
-from System.Common import (
-    Utils
-)
+from loguru import logger
 
-from PyQt5.QtCore import (
-    QSettings
-)
+from System.Common import Utils
+
+from PyQt5.QtCore import QSettings
 
 from dataclasses import (
     field,
     dataclass
 )
 
-CurrentSettings: dict[str, object] = {}
+CURRENT_SETTINGS: dict[str, object] = {}
 
 def load_settings() -> None:
     qsettings_cache = QSettings("chips047", "Cassette")
 
     logger.debug(f"Loaded settings from chips047/Cassette")
 
-    CurrentSettings.clear()
-    CurrentSettings.update(
+    CURRENT_SETTINGS.clear()
+    CURRENT_SETTINGS.update(
         {
             k: Utils.auto_cast(qsettings_cache.value(k)) for k in qsettings_cache.allKeys()
         }
     )
 
-def get_default_value(params) -> int | str | bool | None:
-    e_type = params.get("type", "")
+def get_default_value(parameters: dict[str, object]) -> int | str | bool | None:
+    element_type = parameters.get("type", "")
     
-    if e_type == "checkbox":
-        return params.get("default", False)
+    if element_type == "checkbox":
+        return parameters.get("default", False)
     
-    if e_type == "slider":
-        return params.get("default", params.get("min", 0))
+    if element_type == "slider":
+        return parameters.get("default", parameters.get("min", 0))
     
-    if e_type.startswith("selector"):
-        return params["map"][params["default"]]
+    if element_type.startswith("selector"):
+        return parameters["map"][parameters["default"]]
     
     return None
 
-def prepare_default_settings(setting_components) -> None:
-    settings = QSettings("chips047", "Cassette")
-    existing_keys = set(settings.allKeys())
-    new_keys = set()
+def prepare_default_settings(setting_components: dict[str, list]) -> None:
+    settings       = QSettings("chips047", "Cassette")
+    existing_keys  = set(settings.allKeys())
+    new_keys       = set()
     protected_keys = {"tutorial_shown", "new_user"}
 
     for components in setting_components.values():
-        for params in components:
-            key = params["key"]
+        for parameters in components:
+            key = parameters["key"]
             new_keys.add(key)
 
             if settings.contains(key):
                 continue
 
-            default_val = get_default_value(params)
+            default_val = get_default_value(parameters)
             if default_val is not None:
                 settings.setValue(key, default_val)
 
     for key in (existing_keys - new_keys):
-        if key not in protected_keys:
-            settings.remove(key)
+        if key in protected_keys:
+            continue
+
+        settings.remove(key)
 
     settings.sync()
 
@@ -125,30 +125,36 @@ class DeviceConfig:
     def total_tracks_with_segments(self) -> int:
         return self.base_tracks + sum(self.segments_map.values())
 
-    def get_array_indexes(self, glyph_index: int, zone_index: int):
-        g_idx = glyph_index - 1
-        z_idx = zone_index - 1
-        
-        if z_idx == -1:
-            return self.glyph_indexes[g_idx]
-        
-        offset = self.zone_offset_calc(g_idx)
-        return self.zone_indexes[g_idx + z_idx + offset]
+    def get_array_indexes(
+            self,
+            glyph_index: int,
+            zone_index:  int
+        ) -> list | int:
 
-def make_ranges(*args: int | list[int]):
-    res = []
+        glyph_index -= 1
+        zone_index  -= 1
+        
+        if zone_index == -1:
+            return self.glyph_indexes[glyph_index]
+        
+        offset = self.zone_offset_calc(glyph_index)
+        
+        return self.zone_indexes[glyph_index + zone_index + offset]
+
+def make_ranges(*args: int | list[int]) -> list[list[int]]:
+    result = []
     current = 0
 
     for arg in args:
         if isinstance(arg, int):
-            res.append(list(range(current, current + arg)))
+            result.append(list(range(current, current + arg)))
             current += arg
         
         else:
-            res.append(arg)
+            result.append(arg)
             current = max(arg) + 1 if arg else current
     
-    return res
+    return result
 
 DEVICES: dict[str, DeviceConfig] = {
     "PHONE1": DeviceConfig(
@@ -177,9 +183,7 @@ DEVICES: dict[str, DeviceConfig] = {
         glyph_indexes = make_ranges(20, 11, 5),
         zone_indexes = [[i] for i in range(36)],
         segments_map = {"1": 20, "2": 11, "3": 5}
-    ),
-
-
+    )
 }
 
 def number_model_to_code(number: str):
@@ -614,17 +618,17 @@ ModelVisualizerMaps = {
 # Defaults
 STATUS_BAR_DEFAULT = f"Cassette {open('version').read()}"
 
-DEFAULT_DURATION = 100
+DEFAULT_DURATION   = 100
 DEFAULT_BRIGHTNESS = 100
 
 # Paths
-FFMPEG_PATH = "System/FFmpeg/ffmpeg"
-FFPROBE_PATH = "System/FFmpeg/ffprobe"
+FFMPEG_PATH  = Utils.get_ffmpeg_path("ffmpeg")
+FFPROBE_PATH = Utils.get_ffmpeg_path("ffprobe")
 
 # Qt Timer Presets
-FPS_60 = 16
+FPS_60  = 16
 FPS_120 = 8
-FPS_30 = 33
+FPS_30  = 33
 
 GITHUB_LINK = "https://www.github.com/Chipik0/Cassette/releases/latest"
 

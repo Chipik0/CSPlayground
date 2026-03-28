@@ -5,10 +5,7 @@ import copy
 from typing import *
 
 if TYPE_CHECKING:
-    from . import (
-        Controllers
-    )
-
+    from . import Controllers
 
 from System.Services import (
     ProjectSaver,

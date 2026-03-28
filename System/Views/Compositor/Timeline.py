@@ -4,9 +4,7 @@ import copy
 import numpy
 import traceback
 
-from loguru import (
-    logger
-)
+from loguru import logger
 
 from PyQt5.QtGui import (
     QPen,
@@ -62,8 +60,8 @@ from System.Services import (
 from System.Interface import (
     Menu,
     Basic,
-    Windows,
-    Widgets
+    Widgets,
+    Windows
 )
 
 class Tooltip(Widgets.ValuePopup):
@@ -137,7 +135,7 @@ class ScrollableContent(QGraphicsView):
         self.setup_shortcuts()
 
     def configure_view(self) -> None:
-        if Constants.CurrentSettings["gpu"]:
+        if Constants.CURRENT_SETTINGS["gpu"]:
             self.gl_viewport = QOpenGLWidget()
             self.gl_viewport.frameSwapped.connect(self.on_frame_swapped)
 
@@ -157,8 +155,8 @@ class ScrollableContent(QGraphicsView):
         self.playback_manager: Player.PlaybackManager          = parent.playback_manager
         self.composition:      ProjectSaver.Composition | None = None
 
-        self.px_per_sec: float = Constants.CurrentSettings["default_scaling"]
-        self.tile_width: int   = Constants.CurrentSettings["tile_width"]
+        self.px_per_sec: float = Constants.CURRENT_SETTINGS["default_scaling"]
+        self.tile_width: int   = Constants.CURRENT_SETTINGS["tile_width"]
 
         self.track_names           = []
         self.total_content_width   = 0
@@ -241,14 +239,14 @@ class ScrollableContent(QGraphicsView):
             self.on_playback_position_updated()
 
     def on_playback_position_updated(self) -> None:
-        pos_ms     = self.playback_manager.get_position_ms()
+        pos_ms     = self.playback_manager.get_position()
         true_x_pos = (pos_ms / 1000.0) * self.px_per_sec
         
         self.set_playhead_position_px(int(true_x_pos))
 
         horizontal_bar          = self.horizontalScrollBar()
         viewport_width = self.viewport().width()
-        offset_ratio   = Constants.CurrentSettings["playhead_position"]
+        offset_ratio   = Constants.CURRENT_SETTINGS["playhead_position"]
         target_scroll  = int(true_x_pos) - int(viewport_width * offset_ratio)
 
         if not self.is_auto_scroll_active:
@@ -276,7 +274,7 @@ class ScrollableContent(QGraphicsView):
 
     def sync_scroll_to_playhead(self) -> None:
         viewport_width = self.viewport().width()
-        offset_ratio   = Constants.CurrentSettings["playhead_position"]
+        offset_ratio   = Constants.CURRENT_SETTINGS["playhead_position"]
         
         target_visual_offset = int(viewport_width * offset_ratio)
         target_scroll        = int(self.get_playhead_position_px()) - target_visual_offset
@@ -439,7 +437,7 @@ class ScrollableContent(QGraphicsView):
         top      = center_y - max_f * center_y
         bottom   = center_y - min_f * center_y
 
-        sigma = Constants.CurrentSettings["waveform_smoothing"]
+        sigma = Constants.CURRENT_SETTINGS["waveform_smoothing"]
         
         if sigma and sigma > 0.0 and len(top) > 1:
             padding_size   = min(int(numpy.ceil(sigma * 3.0)), len(top) - 1)
@@ -460,7 +458,7 @@ class ScrollableContent(QGraphicsView):
         pixmap.fill(Qt.GlobalColor.transparent)
         painter = QPainter(pixmap)
 
-        if Constants.CurrentSettings["antialiasing"]:
+        if Constants.CURRENT_SETTINGS["antialiasing"]:
             painter.setRenderHint(QPainter.Antialiasing)
 
         count = len(top)
@@ -500,7 +498,7 @@ class ScrollableContent(QGraphicsView):
     def drawBackground(self, painter: QPainter, rect: QRectF) -> None:
         painter.fillRect(self.sceneRect(), QColor(0, 0, 0))
 
-        if Constants.CurrentSettings["antialiasing"]:
+        if Constants.CURRENT_SETTINGS["antialiasing"]:
             painter.setRenderHint(QPainter.Antialiasing)
 
         self.draw_waveform(painter, rect)
@@ -607,7 +605,7 @@ class ScrollableContent(QGraphicsView):
             selected_items = self.glyph_controller.get_selected_glyph_items()
             clicked_glyph  = self.composition.get_glyph(item_under_mouse.glyph_id)
 
-            Utils.ui_sound("App/Menu/MenuOpen")
+            Player.ui_player.play_sound("App/Menu/MenuOpen")
             self.update()
 
             effects, can_show_segments = self.resolve_effect_options(selected_ids, selected_items)
@@ -633,7 +631,7 @@ class ScrollableContent(QGraphicsView):
                 entries.append(("Segments...", lambda: QTimer.singleShot(0, self.segment_control_popup)))
 
             self.menu = Menu.ContextMenu(entries)
-            self.menu.aboutToHide.connect(lambda: Utils.ui_sound("App/Menu/MenuClose"))
+            self.menu.aboutToHide.connect(lambda: Player.ui_player.play_sound("App/Menu/MenuClose"))
             
             self.menu.exec_from_widget(item_under_mouse, event.globalPos())
 
@@ -821,7 +819,7 @@ class ScrollableContent(QGraphicsView):
     # Tutorial
 
     def check_tutorial(self) -> None:
-        if Constants.CurrentSettings.get("tutorial_shown"):
+        if Constants.CURRENT_SETTINGS.get("tutorial_shown"):
             return
 
         self.tutorial_window = Windows.Tutorial(

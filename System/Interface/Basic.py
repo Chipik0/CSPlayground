@@ -2,9 +2,7 @@ import re
 import random
 import string
 
-from loguru import (
-    logger
-)
+from loguru import logger
 
 from PyQt5.QtGui import (
     QPainter,
@@ -32,6 +30,8 @@ from System.Common import (
     Utils,
     Styles
 )
+
+from System.Services import Player
 
 class Timer(QTimer):
     def __init__(
@@ -117,7 +117,7 @@ class GlitchyButton(QPushButton):
 
     def start_glitch(self) -> None:
         if self.enable_glitch_sound:
-            Utils.ui_sound("Reject")
+            Player.ui_player.play_sound("Reject")
 
         self.glitch_started.emit()
 

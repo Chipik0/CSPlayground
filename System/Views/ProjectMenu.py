@@ -394,7 +394,8 @@ class MainMenu(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(10)
         
-        version = open("version").read()
+        version_path = Utils.get_resource_path("version")
+        version = open(version_path).read()
 
         buttons_data = [
             ("New composition",  True,  "on_new_composition"),

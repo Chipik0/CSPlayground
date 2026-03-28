@@ -36,19 +36,14 @@ from System.Common import (
     Styles
 )
 
-from System.Services import (
-    GlyphEffects
-)
-
 from System.Interface import (
     Basic,
     Inputs,
     Widgets
 )
 
-from System.Interface.Animation import (
-    LoomEngine
-)
+from System.Services import GlyphEffects
+from System.Interface.Animation import LoomEngine
 
 class TriangleGuard:
     GUARD_MS: int = 220

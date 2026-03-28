@@ -3,9 +3,7 @@ import math
 import base64
 import shutil
 
-from mutagen.oggopus import (
-    OggOpus
-)
+from mutagen.oggopus import OggOpus
 
 from System.Common.Constants import (
     DEVICES,

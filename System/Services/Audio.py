@@ -5,9 +5,7 @@ import ffmpeg
 import tempfile
 import soundfile
 
-from loguru import (
-    logger
-)
+from loguru import logger
 
 from System.Common.Constants import (
     FFMPEG_PATH,

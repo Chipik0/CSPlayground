@@ -1,18 +1,12 @@
-from __future__ import (
-    annotations
-)
+from __future__ import annotations
 
 import math
 import time
 import threading
 
-from enum import (
-    Enum
-)
+from enum import Enum
 
-from loguru import (
-    logger
-)
+from loguru import logger
 
 from collections.abc import (
     Callable,

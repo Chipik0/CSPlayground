@@ -1,12 +1,8 @@
 import random
 
-from System.Common.Constants import (
-    DEVICES
-)
+from System.Common.Constants import DEVICES
 
-from loguru import (
-    logger
-)
+from loguru import logger
 
 # Data Extraction & Parsing
 

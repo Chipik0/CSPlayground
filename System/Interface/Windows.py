@@ -66,7 +66,7 @@ class FloatingWindowGPU(QOpenGLWidget):
         self._event_loop = None
         self.allow_exit = False
 
-        self.animation_style = animation_style or CurrentSettings["animation_style"]
+        self.animation_style = animation_style or CURRENT_SETTINGS["animation_style"]
 
         self._drag_pos = None
         self.is_ready = False
@@ -100,8 +100,8 @@ class FloatingWindowGPU(QOpenGLWidget):
         fmt.setProfile(QSurfaceFormat.OpenGLContextProfile.CoreProfile)
         fmt.setOption(QSurfaceFormat.FormatOption.DeprecatedFunctions, False)
         
-        if CurrentSettings.get("msaa"):
-            fmt.setSamples(CurrentSettings["msaa"])
+        if CURRENT_SETTINGS.get("msaa"):
+            fmt.setSamples(CURRENT_SETTINGS["msaa"])
         
         self.setFormat(fmt)
 
@@ -124,11 +124,11 @@ class FloatingWindowGPU(QOpenGLWidget):
 
     @property
     def animations_enabled(self):
-        return CurrentSettings.get("floating_window_animations", True)
+        return CURRENT_SETTINGS.get("floating_window_animations", True)
 
     @property
     def bpm_animations_enabled(self):
-        return self.animations_enabled and CurrentSettings.get("bpm_animations", True) and self.player
+        return self.animations_enabled and CURRENT_SETTINGS.get("bpm_animations", True) and self.player
 
     def setup_timers(self):
         logger.critical("gm")
@@ -206,7 +206,7 @@ class FloatingWindowGPU(QOpenGLWidget):
         self.y_offset = 0.0
         self.z_offset = 0.0
         
-        self.tilt_smoothing = float(CurrentSettings["window_hover_smoothing"])
+        self.tilt_smoothing = float(CURRENT_SETTINGS["window_hover_smoothing"])
 
         self.bpm_peak_scale = 1.03
 
@@ -221,7 +221,7 @@ class FloatingWindowGPU(QOpenGLWidget):
 
         self.animation_engine = LoomEngine.AnimationEngine("pyqt5", 120)
         
-        self.animation_engine.set_multiplier(float(CurrentSettings["animation_multiplier"]))
+        self.animation_engine.set_multiplier(float(CURRENT_SETTINGS["animation_multiplier"]))
         
         properties = [
             ("rotation_x", 0.0, LoomEngine.MixMode.ADD),
@@ -688,7 +688,7 @@ class FloatingWindowGPU(QOpenGLWidget):
         )
 
     def move_start_animation(self):
-        if not CurrentSettings["floating_window_animations"]:
+        if not CURRENT_SETTINGS["floating_window_animations"]:
             return
         
         self.animation_engine.animate(
@@ -702,7 +702,7 @@ class FloatingWindowGPU(QOpenGLWidget):
         self.animation_title_scale(1.15, 500)
     
     def move_end_animation(self):
-        if not CurrentSettings["floating_window_animations"]:
+        if not CURRENT_SETTINGS["floating_window_animations"]:
             return
         
         self.animation_engine.animate(
@@ -714,7 +714,7 @@ class FloatingWindowGPU(QOpenGLWidget):
         )
 
     def wobble(self):
-        if not CurrentSettings["floating_window_animations"]:
+        if not CURRENT_SETTINGS["floating_window_animations"]:
             return
 
         self.animation_engine.animate(
@@ -812,7 +812,7 @@ class FloatingWindowGPU(QOpenGLWidget):
         )
     
     def animation_random_rotate(self):
-        if not CurrentSettings["floating_window_animations"]:
+        if not CURRENT_SETTINGS["floating_window_animations"]:
             return
         
         self.animation_engine.animate(
@@ -828,7 +828,7 @@ class FloatingWindowGPU(QOpenGLWidget):
         if not self.enable_close_animation:
             return
         
-        if not CurrentSettings["floating_window_animations"]:
+        if not CURRENT_SETTINGS["floating_window_animations"]:
             return self._really_close()
 
         size = self.get_window_size()
@@ -844,7 +844,7 @@ class FloatingWindowGPU(QOpenGLWidget):
     def start_disturbe_animation(self):
         self.disturbe_sound()
         
-        if not CurrentSettings["floating_window_animations"]:
+        if not CURRENT_SETTINGS["floating_window_animations"]:
             return
         
         {
@@ -863,7 +863,7 @@ class FloatingWindowGPU(QOpenGLWidget):
 
         size = self.get_window_size()
 
-        if not CurrentSettings["floating_window_animations"]:
+        if not CURRENT_SETTINGS["floating_window_animations"]:
             return
 
         {
@@ -1017,13 +1017,13 @@ class FloatingWindowGPU(QOpenGLWidget):
             
             if random.random() < 0.5:
                 if self.ee_exit_attempts == 50:
-                    Utils.ui_sound("Packs/NOK/WAYD")
+                    Player.ui_player.play_sound("Packs/NOK/WAYD")
                     
                     if self.title_label:
                         self.title_label.setText("What are you doing?")
                 
                 if self.ee_exit_attempts == 70:
-                    Utils.ui_sound("Packs/NOK/HCYLWY")
+                    Player.ui_player.play_sound("Packs/NOK/HCYLWY")
                     
                     if self.title_label:
                         self.title_label.setText("???")
@@ -1033,14 +1033,14 @@ class FloatingWindowGPU(QOpenGLWidget):
                 
                 if self.ee_exit_attempts == 100:
                     if self.title_label:
-                        Utils.ui_sound("Packs/NOK/ONYD")
+                        Player.ui_player.play_sound("Packs/NOK/ONYD")
 
                         self.title_label.setText("Dividing by zero: 3")
 
                         QTimer.singleShot(1000, lambda: self.title_label.setText("Dividing by zero: 2"))
                         QTimer.singleShot(2000, lambda: self.title_label.setText("Dividing by zero: 1"))
                         QTimer.singleShot(2500, lambda: self.title_label.setText("LMAO"))
-                        QTimer.singleShot(2100, lambda: Utils.ui_sound("Packs/NOK/Charging"))
+                        QTimer.singleShot(2100, lambda: Player.ui_player.play_sound("Packs/NOK/Charging"))
                         QTimer.singleShot(3000, lambda: 1 / 0)
             
             event.ignore()
@@ -1232,7 +1232,7 @@ class FloatingWindowGPU(QOpenGLWidget):
                 if self.player.is_playing:
                     return self.player_pulse()
 
-        Utils.ui_sound(
+        Player.ui_player.play_sound(
             {
                 "bouncy": "Packs/Bouncy/Open",
                 "smooth": "Packs/Smooth/Open",
@@ -1248,7 +1248,7 @@ class FloatingWindowGPU(QOpenGLWidget):
                 if self.player.is_playing:
                     return self.player_pulse(0.4, 0.5)
 
-        Utils.ui_sound(
+        Player.ui_player.play_sound(
             {
                 "bouncy": "Packs/Bouncy/Close",
                 "smooth": "Packs/Smooth/Close",
@@ -1264,7 +1264,7 @@ class FloatingWindowGPU(QOpenGLWidget):
                 if self.player.is_playing:
                     return self.player_pulse(0.4, 2.0)
         
-        Utils.ui_sound(
+        Player.ui_player.play_sound(
             {
                 "bouncy": "Packs/Bouncy/Disturbe",
                 "smooth": "Packs/Smooth/Disturbe",
@@ -1291,7 +1291,7 @@ class FloatingWindowGPU(QOpenGLWidget):
         self.anim_group = QParallelAnimationGroup(self)
 
         if multiplier == 1.0 and not do_not_multiply_duration:
-            multiplier = float(CurrentSettings["animation_multiplier"])
+            multiplier = float(CURRENT_SETTINGS["animation_multiplier"])
         
         else:
             multiplier = 1.0
@@ -2441,11 +2441,20 @@ class AudioSetupDialog(FloatingWindowGPU):
         except Exception:
             ErrorWindow("BPM Error", traceback.format_exc()).exec_()
     
-    def setup_animations(self):
-        self._bpm_anim_target = None
+    def setup_animations(self) -> None:
+        self._bpm_anim_target  = None
         self._bpm_anim_current = 120
-        self._bpm_text = ""
-        self._bpm_number_str = ""
+        self._bpm_text         = ""
+        self._bpm_number_str   = ""
+        
+        self.beat_count        = 0
+        self.beat_timer        = None
+
+        self.beat_timer = Basic.Timer(
+            0,
+            self.update_title_with_beat_animation,
+            parent = self
+        )
         
         self.playback_timer = Basic.Timer(
             FPS_60,
@@ -2465,8 +2474,6 @@ class AudioSetupDialog(FloatingWindowGPU):
             auto_start = True,
             parent = self
         )
-
-        self.player.beat_normal.connect(self.update_title)
     
     def setup_audio_layout(self):
         playback_layout = QHBoxLayout()
@@ -2581,7 +2588,7 @@ class AudioSetupDialog(FloatingWindowGPU):
         self.bpm_remove_timer.start(100)
 
         if random.randint(1, 500) == 500:
-            Utils.ui_sound("Packs/NOK/Gambling")
+            Player.ui_player.play_sound("Packs/NOK/Gambling")
 
     def get_perfect_width(self):
         text = str(self.bpm_input.text() or self.bpm_input.placeholderText() or "BPM")
@@ -2648,13 +2655,30 @@ class AudioSetupDialog(FloatingWindowGPU):
 
         self.start_time_label.max_number = end_s - 1
 
-    def update_title(self):
-        position_ms = f"{round(self.player.get_position_ms() / 1000, 4):.3f}"
+    def update_title_with_beat_animation(self) -> None:
+        position_ms = f"{round(self.player.get_position() / 1000, 4):.3f}"
         self.title_label.setText(position_ms)
+        
+        audio_level = self.player.get_current_audio_level()
+        
+        if audio_level < 0.08:
+            return
+        
+        self.beat_count += 1
+        
+        if self.beat_count % 4 == 0:
+            self.animation_title_scale(
+                peak_scale = 1.4,
+                duration   = 200
+            )
+        
+        else:
+            self.animation_title_scale(
+                peak_scale = 1.1,
+                duration   = 120
+            )
 
-        self.animation_title_scale()
-
-    def animate_bpm_spinbox(self):
+    def animate_bpm_spinbox(self) -> None:
         if not self._bpm_anim_target:
             self._bpm_anim_target = np.random.randint(60, 180)
 
@@ -2669,7 +2693,7 @@ class AudioSetupDialog(FloatingWindowGPU):
 
         self.bpm_input.setPlaceholderText(f"Counting BPM {self._bpm_anim_current}")
 
-    def _bpm_remove_step(self):
+    def _bpm_remove_step(self) -> None:
         if self._bpm_text:
             self._bpm_text = self._bpm_text[1:]
             self.bpm_input.setPlaceholderText(f"{self._bpm_text}{self._bpm_number_str}")
@@ -2703,7 +2727,7 @@ class AudioSetupDialog(FloatingWindowGPU):
         else:
             self.play_selection()
 
-    def play_selection(self):
+    def play_selection(self) -> None:
         current_playback_sec = self.trim_widget.playback_position
         
         if not (self.trim_widget.start_time <= current_playback_sec < self.trim_widget.end_time):
@@ -2715,17 +2739,29 @@ class AudioSetupDialog(FloatingWindowGPU):
         self.play_button.setIcon(self.pause_icon)
         self.trim_widget.set_is_playing(True)
         self.playback_timer.start()
+        
+        self.beat_count = 0
+        bpm_value       = int(self.bpm_input.text() or 120)
+        beat_interval   = int(60000 / bpm_value / 4)
+        
+        self.beat_timer.stop()
+        self.beat_timer.setInterval(beat_interval)
+        self.beat_timer.start()
 
-    def stop_playback(self):
+    def stop_playback(self) -> None:
         self.player.stop()
 
         self.play_button.setIcon(self.play_icon)
         self.trim_widget.set_is_playing(False)
         self.playback_timer.stop()
+        
+        self.beat_timer.stop()
+        
+        self.beat_count = 0
 
     def update_playback(self):
         if self.player.is_playing:
-            current_pos_ms = self.player.get_position_ms()
+            current_pos_ms = self.player.get_position()
             
             if current_pos_ms > self.trim_widget.end_time * 1000:
                 self.trim_widget.set_playback_position(self.trim_widget.start_time)
@@ -2782,14 +2818,18 @@ class AudioSetupDialog(FloatingWindowGPU):
             "model": number_model_to_code(self.model_selector.currentText()),
         }
     
-    def cleanup(self, cancelled=False):
+    def cleanup(self, cancelled = False) -> None:
         self.playback_timer.stop()
         self.bpm_anim_timer.stop()
         self.bpm_remove_timer.stop()
+        
+        if self.beat_timer:
+            self.beat_timer.stop()
+        
         self.trim_widget.audio_data = None
 
         if self.player.is_playing:
-            self.player.tape(duration = 1.0 if not cancelled else 3.0, end_speed = 0.0)
+            self.player.set_speed(0.0, 3000)
 
         threads_to_wait = []
         
@@ -3043,7 +3083,7 @@ class WalterWindow(FloatingWindowGPU):
         self.image.update_image(current_pixmap)
 
         if not self.is_walter_closed:
-            Utils.ui_sound("Packs/NOK/HEVCharger", tone = 1.0)
+            Player.ui_player.play_sound("Packs/NOK/HEVCharger", speed=1.0, enable_tone_randomizer=False)
             self.label.setText("Such a good boy.")
 
             self.chaos_timer.start()
