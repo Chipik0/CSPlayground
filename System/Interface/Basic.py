@@ -295,6 +295,8 @@ class DescriptionLabel(QLabel):
             text: str,
             maximum_width: int | None = None
         ) -> None:
+
+        print("INIT CALLED WITH:", text)
         
         text = re.sub(r"`([^`]*)`", r'<span style="color:white;">\1</span>', text)
         text = text.replace("\n", "<br>")

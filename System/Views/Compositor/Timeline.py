@@ -820,12 +820,12 @@ class ScrollableContent(QGraphicsView):
     # Tutorial
 
     def check_tutorial(self) -> None:
-        if Constants.CURRENT_SETTINGS.get("tutorial_shown"):
+        if not Constants.CURRENT_SETTINGS.get("tutorial_shown"):
             return
 
         self.tutorial_window = Windows.Tutorial(
             self.composition.bpm,
-            self.composition.full_song_path,
+            self.composition.full_song_path
         )
 
         settings = QSettings("chips047", "Cassette")

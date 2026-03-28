@@ -2144,7 +2144,7 @@ class Tutorial(FloatingWindowGPU):
 
         self.build_pages()
         self.initialize_ui()
-        self.initalize_audio()
+        self.initialize_audio()
         self.set_bpm_peak_size(1.02)
 
         self.make_page()
@@ -2176,7 +2176,7 @@ class Tutorial(FloatingWindowGPU):
         self.max_stage = len(self.pages)
 
     def initialize_ui(self):
-        self.text_label = Basic.DescriptionLabel()
+        self.text_label = Basic.DescriptionLabel("Hello mazafaka белка")
         self.text_label.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
         self.text_label.setMinimumWidth(400)
 
@@ -2201,7 +2201,7 @@ class Tutorial(FloatingWindowGPU):
             self.player.set_bitcrush(bits = 24, downsample = 1, duration_ms = 2000)
 
         def s2():
-            self.player.set_speed(1.0, duration = 1000)
+            self.player.set_speed(1.0, duration_ms = 1000)
             self.player.set_midpass(mix = 0.0, duration_ms = 1000)
 
         def s3():
