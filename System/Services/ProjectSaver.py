@@ -254,7 +254,7 @@ class BaseComposition:
 
         stream = ffmpeg.input(input_path)
         stream = ffmpeg.filter(stream, "atrim",      start=start_time, end=end_time)
-        stream = ffmpeg.filter(stream, "asetpts",    "PTS-STARTPTS")
+        stream = ffmpeg.filter(stream, "asetpts", expr="PTS-STARTPTS")
         stream = ffmpeg.filter(stream, "dynaudnorm")
 
         if fade_in:
@@ -272,12 +272,20 @@ class BaseComposition:
                 duration   = fade_out / 1000.0,
             )
 
-        (
-            ffmpeg
-            .output(stream, output_path, acodec="libopus", ar=48000)
-            .overwrite_output()
-            .run(cmd = FFMPEG_PATH, quiet = True)
-        )
+        try:
+            (
+                ffmpeg
+                .output(stream, output_path, acodec="libopus", ar=48000)
+                .overwrite_output()
+                .run(
+                    cmd            = FFMPEG_PATH,
+                    capture_stdout = True,
+                    capture_stderr = True
+                )
+            )
+        
+        except ffmpeg.Error as error:
+            print(error.stderr.decode("utf-8", errors="ignore"))
 
     def sorted_glyphs(self) -> tuple[list[dict], list[dict]]:
         singles: list[dict] = []

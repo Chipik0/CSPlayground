@@ -77,6 +77,7 @@ class Tooltip(Widgets.ValuePopup):
         target_item: Widgets.GlyphItem | None = None,
         plan_hide:   bool                     = False
     ) -> None:
+        
         self.is_hide_planned = plan_hide
         self.show_text(text, self.calculate_position(target_item), plan_hide)
 

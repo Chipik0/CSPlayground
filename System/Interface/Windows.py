@@ -86,7 +86,6 @@ class FloatingWindowGPU(QOpenGLWidget):
         self.apply_attributes(dialog, stays_on_top)
         self.setup_layout(title)
         self.setup_animation_properties()
-        logger.critical("CALLing")
         self.setup_timers()
         
         if self.enable_open_animation:
@@ -553,7 +552,7 @@ class FloatingWindowGPU(QOpenGLWidget):
             [
                 (0.0, 1.0),
                 (1.0, 0.0)
-            ], 350, LoomEngine.Easing.ease_in_circ
+            ], 350, LoomEngine.Easing.ease_in_quad
         )
 
         self.animation_engine.animate(
@@ -2191,18 +2190,19 @@ class Tutorial(FloatingWindowGPU):
         self.is_audio_small = self.player.duration_ms < 30000
         
         if not self.is_audio_small:
-            self.player.enable_midpass(duration=1.0)
-            self.player.enable_bitcrush(6, 8, duration=3.0)
-            self.player.tape(start_speed=0, end_speed=0.9, duration=3.0)
+            self.player.set_midpass()
+            self.player.set_bitcrush(True, 6, 8)
+            self.player.set_speed(0)
+            self.player.set_speed(0.8, 3000)
 
         def s1():
-            self.player.set_speed(0.95, duration=1.0)
-            self.player.disable_bitcrush(2.0)
-            self.player.enable_midpass(700, duration=2.0)
+            self.player.set_speed(0.95, 1000)
+            self.player.set_midpass(mix = 0.5, duration_ms = 1000)
+            self.player.set_bitcrush(bits = 24, downsample = 1, duration_ms = 2000)
 
         def s2():
-            self.player.set_speed(1.0, duration=1.0)
-            self.player.disable_midpass(2.0)
+            self.player.set_speed(1.0, duration = 1000)
+            self.player.set_midpass(mix = 0.0, duration_ms = 1000)
 
         def s3():
             self.set_bpm_peak_size(1.04)
@@ -2211,7 +2211,7 @@ class Tutorial(FloatingWindowGPU):
             self.set_bpm_peak_size(1.05)
 
         def s7():
-            self.player.tape(end_speed=0.0, duration=3.0, shutdown_on_finish=True)
+            self.player.set_speed(0.0, 4000, shutdown_on_finish = True)
 
         self._stage_effects = {
             1: s1,
@@ -2991,7 +2991,7 @@ class Playground(FloatingWindowGPU):
 
     def _bind_logic(self):
         self.volume_slider.slider.valueChanged.connect(lambda v: Player.player.set_volume(v/100))
-        self.player_speed_slider.slider.valueChanged.connect(lambda v: Player.player.set_speed(v/100, duration=0.1))
+        self.player_speed_slider.slider.valueChanged.connect(lambda v: Player.player.set_speed(v/100, duration_ms=3000))
         
         for s in [self.bc_mix_slider, self.bc_bits_slider, self.bc_down_slider]:
             s.slider.valueChanged.connect(self.update_bitcrush)
@@ -3016,31 +3016,25 @@ class Playground(FloatingWindowGPU):
 
     def update_bitcrush(self):
         mix = self.bc_mix_slider.slider.value() / 100
-        if mix > 0:
-            Player.player.enable_bitcrush(
-                bits=self.bc_bits_slider.slider.value(),
-                downsample=self.bc_down_slider.slider.value(),
-                mix=mix
-            )
-        else:
-            Player.player.disable_bitcrush(duration=0.1)
+        Player.player.set_bitcrush(
+            bits=self.bc_bits_slider.slider.value(),
+            downsample=self.bc_down_slider.slider.value(),
+            mix=mix
+        )
 
     def update_filter(self):
         mix = self.mid_mix_slider.slider.value() / 100
-        if mix > 0:
-            Player.player.enable_midpass(
-                center_hz=self.mid_freq_slider.slider.value(),
-                q=self.mid_q_slider.slider.value() / 10,
-                mix=mix
-            )
-        else:
-            Player.player.disable_midpass(duration=0.1)
+        Player.player.set_midpass(
+            center_hz=self.mid_freq_slider.slider.value(),
+            q=self.mid_q_slider.slider.value() / 10,
+            mix=mix
+        )
 
     def update_delays(self):
-        Player.player.smooth_channel_delay(
+        Player.player.set_channel_delay(
             left_to_ms=self.delay_l_slider.slider.value(),
             right_to_ms=self.delay_r_slider.slider.value(),
-            duration=0.2
+            duration_ms=1000
         )
 
 class WalterWindow(FloatingWindowGPU):

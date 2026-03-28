@@ -6,6 +6,8 @@
 - New settings
 - Import
 - Оптимизировать Glyph Receiver, добавить в Glyph Receiver поддержку keyframes
+- Исправить невозможность выключить midpass / bitcrush через set в плеере
+- Исправить интерфейс не обновляется при scale ctrl +
 
 # Optimization and Code Look
 Actions.py      100% | Done

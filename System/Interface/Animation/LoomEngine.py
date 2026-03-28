@@ -22,8 +22,6 @@ class EventSignal:
     def connect(self, callback: Callable[..., object]) -> None:
         if callback in self.callbacks:
             return
-        
-        print("CONNECTED")
 
         self.callbacks.append(callback)
 

@@ -44,7 +44,7 @@ from System.Services import Player
 
 from System.Common.Constants import CURRENT_SETTINGS
 
-class NavButton(QAbstractButton):
+class NavButton(QPushButton):
     def __init__(
         self,
         text:   str,

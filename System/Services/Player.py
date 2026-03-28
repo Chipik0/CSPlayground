@@ -197,6 +197,8 @@ class PlaybackManager(QObject):
 
             if self.data.ndim == 1:
                 self.data = numpy.stack([self.data, self.data], axis = -1)
+            
+            self.filter_states = numpy.zeros((self.data.shape[1], 4), dtype='float64')
 
         if fs_changed or not self.stream:
             self.open_stream()
@@ -525,7 +527,7 @@ class PlaybackManager(QObject):
         a1 /= a0
         a2 /= a0
 
-        return (b0, b1, b2), (a1, a2)
+        return (a1, a2), (b0, b1, b2)
 
     def get_current_audio_level(self) -> float:
         return self.current_audio_level
@@ -535,32 +537,22 @@ class PlaybackManager(QObject):
 
     def set_channel_delay(
             self,
-            left_from_ms:  float  = None,
             left_to_ms:    float  = None,
-            right_from_ms: float  = None,
             right_to_ms:   float  = None,
             duration_ms:   int    = 0,
             easing:        Easing = Easing.smooth
         ) -> None:
 
         if (
-            not left_to_ms    and
-            not right_to_ms   and
-            not left_from_ms  and
-            not right_from_ms
+            not left_to_ms and
+            not right_to_ms
         ): return
 
-        if left_from_ms is None:
-            left_from_ms = self.channel_delays_ms[0]
-
         if left_to_ms is None:
-            left_to_ms = self.channel_delays_ms[0]
-
-        if right_from_ms is None:
-            right_from_ms = self.channel_delays_ms[1]
+            left_to_ms = self.loom.get_property_value("channel_delay_left")
 
         if right_to_ms is None:
-            right_to_ms = self.channel_delays_ms[1]
+            right_to_ms = self.loom.get_property_value("channel_delay_right")
 
         if not duration_ms:
             self.loom.set_property_base_value("channel_delay_left", left_to_ms)
@@ -568,9 +560,6 @@ class PlaybackManager(QObject):
 
             return
 
-        self.loom.set_property_base_value("channel_delay_left",  left_from_ms)
-        self.loom.set_property_base_value("channel_delay_right", right_from_ms)
-        
         self.loom.set_target_value("channel_delay_left",  left_to_ms,  duration_ms, easing)
         self.loom.set_target_value("channel_delay_right", right_to_ms, duration_ms, easing)
 
@@ -630,8 +619,8 @@ class PlaybackManager(QObject):
             self,
             enabled:     bool   = True,
             bits:        int    = 24,
-            mix:         float  = 0.0,
             downsample:  int    = 1,
+            mix:         float  = 0.0,
             duration_ms: int    = 0,
             easing:      Easing = Easing.smooth
         ) -> None:

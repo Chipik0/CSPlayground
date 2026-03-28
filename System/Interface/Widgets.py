@@ -67,11 +67,7 @@ from System.Services import Player
 from System.Interface.Animation import LoomEngine
 
 class ValuePopup(QWidget):
-    def __init__(
-        self,
-        parent: QWidget | None = None
-    ) -> None:
-        
+    def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
 
         self.setAttribute(Qt.WA_TranslucentBackground)
@@ -920,7 +916,7 @@ class MarqueeItem(QGraphicsObject):
                 ("pen_opacity",   1.0,       LoomEngine.MixMode.NOMIX)
             ]
         )
-
+    
     # Events
     
     def itemChange(

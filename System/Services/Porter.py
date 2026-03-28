@@ -87,7 +87,7 @@ class Port:
         if "effect" in glyph:
             effect_name = glyph["effect"]["name"]
             
-            if effect_name in GlyphEffects.only_segmented():
+            if effect_name in GlyphEffects.get_segmented_effects():
                 logger.info(f"Detected segmented effect: '{effect_name}'. Routing to segment map.")
                 return model_map["effects"]["segments"][from_track]
 

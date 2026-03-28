@@ -581,7 +581,7 @@ class AutoScroller:
         self.is_dragging        = False
         self.position           = float(self.conductor.horizontalScrollBar().value())
 
-        self.rewind_sound_id    = None
+        self.rewind_sound    = None
 
         self.timer = Basic.Timer(
             Constants.FPS_120,
@@ -596,12 +596,12 @@ class AutoScroller:
         sound_speed = min(max(abs(self.velocity / 14), 0.5), 1.7)
 
         if not self.is_dragging:
-            self.rewind_sound_id = Player.ui_player.playsound("Rewind", True, sound_speed)
+            self.rewind_sound = Player.ui_player.play_sound("Rewind2", True, sound_speed)
             self.is_dragging = True
         
         else:
-            if self.rewind_sound_id is not None:
-                Player.ui_player.setspeed(self.rewind_sound_id, sound_speed)
+            if self.rewind_sound:
+                self.rewind_sound.set_speed(sound_speed)
 
         self.position   = float(self.conductor.horizontalScrollBar().value())
         view_pos        = self.conductor.mapFromGlobal(global_pos)
@@ -629,8 +629,9 @@ class AutoScroller:
     def stop_drag(self) -> None:
         self.is_dragging = False
 
-        if self.rewind_sound_id:
-            Player.ui_player.stopsound(self.rewind_sound_id)
+        if self.rewind_sound:
+            self.rewind_sound.stop()
+            self.rewind_sound = None
 
     def update(self) -> None:
         if self.conductor.playback_manager.is_playing:
